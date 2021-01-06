@@ -203,6 +203,7 @@ public class InstagramPreviewContainer extends FrameLayout {
 
         CombinedDrawable ratiodDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), 0x88000000, Color.BLACK),
                 context.getResources().getDrawable(R.drawable.discover_telescopic).mutate());
+        ratiodDrawable.setIconSize(42, 42);
         ratiodDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
 
         mRatioView.setImageDrawable(ratiodDrawable);
@@ -226,6 +227,7 @@ public class InstagramPreviewContainer extends FrameLayout {
 
         CombinedDrawable multiDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), 0x88000000, Color.BLACK),
                 context.getResources().getDrawable(R.drawable.discover_many).mutate());
+        multiDrawable.setIconSize(42, 42);
         multiDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
 
         mMultiView.setImageDrawable(multiDrawable);
@@ -233,7 +235,7 @@ public class InstagramPreviewContainer extends FrameLayout {
         multiLayoutParams.rightMargin = ScreenUtils.dip2px(context, 15);
         multiLayoutParams.bottomMargin = ScreenUtils.dip2px(context, 12);
         addView(mMultiView, multiLayoutParams);
-        mMultiView.setOnClickListener(v -> setMultiMode(!isMulti));
+        mMultiView.setOnClickListener(v -> setMultiMode(context, !isMulti));
 
         View divider = new View(getContext());
         if (config.instagramSelectionConfig.getCurrentTheme() == InsGallery.THEME_STYLE_DARK) {
@@ -247,13 +249,26 @@ public class InstagramPreviewContainer extends FrameLayout {
         addView(divider, dividerParms);
     }
 
-    public void setMultiMode(boolean multi) {
+    public void setMultiMode(Context context, boolean multi) {
+        int mIconBackgroundColor;
+        int mIconBackgroundColor2;
+
         isMulti = multi;
         if (multi) {
+            mIconBackgroundColor = 0x880087FF;
+            mIconBackgroundColor2 = 0xFF0087FF;
             mRatioView.setVisibility(View.GONE);
         } else {
+            mIconBackgroundColor = 0x88000000;
+            mIconBackgroundColor2 = Color.BLACK;
             mRatioView.setVisibility(View.VISIBLE);
         }
+        CombinedDrawable multiDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), mIconBackgroundColor, mIconBackgroundColor2),
+                context.getResources().getDrawable(R.drawable.discover_many).mutate());
+        multiDrawable.setIconSize(42, 42);
+        multiDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
+        mMultiView.setImageDrawable(multiDrawable);
+
         if (mListener != null) {
             mListener.onSelectionModeChange(multi);
         }
@@ -330,10 +345,10 @@ public class InstagramPreviewContainer extends FrameLayout {
         if (mPlayMode != PLAY_IMAGE_MODE) {
             return;
         }
-        if (inputUri != null && outputUri != null) {
+        if (outputUri != null) {
             try {
                 boolean isOnTouch = isOnTouch(inputUri);
-                mGestureCropImageView.setScaleEnabled(isOnTouch ? true : isOnTouch);
+                mGestureCropImageView.setScaleEnabled(isOnTouch);
                 mGestureCropImageView.setImageUri(inputUri, outputUri);
             } catch (Exception e) {
                 e.printStackTrace();

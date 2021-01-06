@@ -9,6 +9,13 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop" />
 
+    <View
+        android:id="@+id/iv_mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#aaffffff"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/tvCheck"
         android:layout_width="wrap_content"
@@ -17,6 +24,7 @@
         android:layout_margin="8dp"
         android:background="?attr/picture.checked.style"
         android:gravity="center"
+        android:text="123"
         android:textColor="@color/picture_color_white"
         android:textSize="12sp" />
 
@@ -66,12 +74,4 @@
         android:textColor="@color/picture_color_white"
         android:textSize="11sp"
         android:visibility="gone" />
-
-    <View
-        android:id="@+id/iv_mask"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#aaffffff"
-        android:visibility="gone"
-        />
 </com.luck.picture.lib.widget.SquareRelativeLayout>

@@ -1,5 +1,6 @@
 package com.luck.picture.lib.camera;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
@@ -43,15 +44,20 @@ import androidx.camera.core.ImageCapture.OutputFileOptions;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.VideoCapture;
 import androidx.camera.view.CameraView;
+import androidx.camera.view.video.OnVideoSavedCallback;
+import androidx.camera.view.video.OutputFileResults;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author：luck
  * @date：2020-01-04 13:41
  * @describe：自定义相机View
  */
+@SuppressLint("UnsafeExperimentalUsageError")
 public class CustomCameraView extends RelativeLayout {
     /**
      * 只能拍照
@@ -148,11 +154,11 @@ public class CustomCameraView extends RelativeLayout {
                 mSwitchCamera.setVisibility(INVISIBLE);
                 mFlashLamp.setVisibility(INVISIBLE);
                 mCameraView.setCaptureMode(androidx.camera.view.CameraView.CaptureMode.VIDEO);
-                mCameraView.startRecording(createVideoFile(), ContextCompat.getMainExecutor(getContext()),
-                        new VideoCapture.OnVideoSavedCallback() {
+                mVideoFile = createVideoFile();
+                mCameraView.startRecording(mVideoFile, ContextCompat.getMainExecutor(getContext()),
+                        new OnVideoSavedCallback() {
                             @Override
-                            public void onVideoSaved(@NonNull File file) {
-                                mVideoFile = file;
+                            public void onVideoSaved(@NonNull OutputFileResults outputFileResults) {
                                 if (recordTime < 1500 && mVideoFile.exists() && mVideoFile.delete()) {
                                     return;
                                 }
@@ -162,7 +168,7 @@ public class CustomCameraView extends RelativeLayout {
                                         @Override
                                         public Boolean doInBackground() {
                                             return AndroidQTransformUtils.copyPathToDCIM(getContext(),
-                                                    file, Uri.parse(mConfig.cameraPath));
+                                                    mVideoFile, Uri.parse(mConfig.cameraPath));
                                         }
 
                                         @Override

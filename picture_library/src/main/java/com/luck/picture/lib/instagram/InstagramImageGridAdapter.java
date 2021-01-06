@@ -145,7 +145,6 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
                 notifyCheckChanged(contentHolder, image);
             }
 
-
             if (!config.isSingleDirectReturn) {
                 selectImage(contentHolder, isSelected(image));
             } else {
@@ -217,9 +216,9 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
 
             if (config.enablePreview || config.enPreviewVideo || config.enablePreviewAudio) {
                 contentHolder.btnCheck.setOnClickListener(v -> {
-                    if (isFastDoubleClick()) {
-                        return;
-                    }
+//                    if (isFastDoubleClick()) {
+//                        return;
+//                    }
                     // 如原图路径不存在或者路径存在但文件不存在
                     String newPath = SdkVersionUtils.checkedAndroid_Q()
                             ? PictureFileUtils.getPath(context, Uri.parse(path)) : path;
@@ -374,7 +373,6 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
      * @param contentHolder
      * @param image
      */
-
     @SuppressLint("StringFormatMatches")
     private void changeCheckboxState(ViewHolder contentHolder, LocalMedia image, int position) {
         boolean isChecked = contentHolder.tvCheck.isSelected();
@@ -560,6 +558,10 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
             holder.ivPicture.setColorFilter(ContextCompat.getColor
                     (context, R.color.picture_color_20), PorterDuff.Mode.SRC_ATOP);
         }
+    }
+
+    public void clearSelection() {
+        selectImages.clear();
     }
 
     public interface OnPhotoSelectChangedListener {

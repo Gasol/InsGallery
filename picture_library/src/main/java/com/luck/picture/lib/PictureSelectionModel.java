@@ -731,10 +731,14 @@ public class PictureSelectionModel {
         return this;
     }
 
+//    /**
+//     * After recording with the system camera, does it support playing the video immediately using the system player
+//     *
+//     * @param isQuickCapture
+//     * @return
+//     */
     /**
-     * After recording with the system camera, does it support playing the video immediately using the system player
-     *
-     * @param isQuickCapture
+     * @param isQuickCapture Whether allow swipe left for camera
      * @return
      */
     public PictureSelectionModel isQuickCapture(boolean isQuickCapture) {

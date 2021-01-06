@@ -33,6 +33,8 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.VideoCapture;
 import androidx.camera.view.CameraView;
+import androidx.camera.view.video.OnVideoSavedCallback;
+import androidx.camera.view.video.OutputFileResults;
 import androidx.core.content.ContextCompat;
 
 /**
@@ -42,6 +44,7 @@ import androidx.core.content.ContextCompat;
  * <a href="https://github.com/JessYanCoding">Follow me</a>
  * ================================================
  */
+@SuppressLint("UnsafeExperimentalUsageError")
 public class InstagramCameraView extends FrameLayout {
     public static final int STATE_CAPTURE = 1;
     public static final int STATE_RECORDER = 2;
@@ -113,7 +116,8 @@ public class InstagramCameraView extends FrameLayout {
                     return;
                 }
                 mCameraView.setCaptureMode(androidx.camera.view.CameraView.CaptureMode.VIDEO);
-                mCameraView.startRecording(createVideoFile(), ContextCompat.getMainExecutor(getContext().getApplicationContext()), new OnVideoSavedCallbackImpl(InstagramCameraView.this));
+                File mVideoFile = createVideoFile();
+                mCameraView.startRecording(mVideoFile, ContextCompat.getMainExecutor(getContext().getApplicationContext()), new OnVideoSavedCallbackImpl(InstagramCameraView.this, mVideoFile));
             }
 
             @Override
@@ -413,22 +417,24 @@ public class InstagramCameraView extends FrameLayout {
         }
     }
 
-    private static class OnVideoSavedCallbackImpl implements VideoCapture.OnVideoSavedCallback {
+    private static class OnVideoSavedCallbackImpl implements OnVideoSavedCallback {
         private WeakReference<InstagramCameraView> mCameraView;
+        private File mVideoFile;
 
-        OnVideoSavedCallbackImpl(InstagramCameraView cameraView) {
+        OnVideoSavedCallbackImpl(InstagramCameraView cameraView, File mVideoFile) {
             mCameraView = new WeakReference<>(cameraView);
+            this.mVideoFile = mVideoFile;
         }
 
         @Override
-        public void onVideoSaved(@NonNull File file) {
+        public void onVideoSaved(@NonNull OutputFileResults outputFileResults) {
             InstagramCameraView cameraView = mCameraView.get();
             if (cameraView == null) {
                 return;
             }
             if (cameraView.mRecordTime < cameraView.mConfig.recordVideoMinSecond) {
-                if (file.exists()) {
-                    file.delete();
+                if (mVideoFile.exists()) {
+                    mVideoFile.delete();
                 }
                 return;
             }
@@ -438,19 +444,19 @@ public class InstagramCameraView extends FrameLayout {
                     @Override
                     public Boolean doInBackground() {
                         return AndroidQTransformUtils.copyPathToDCIM(cameraView.getContext(),
-                                file, Uri.parse(cameraView.mConfig.cameraPath));
+                                mVideoFile, Uri.parse(cameraView.mConfig.cameraPath));
                     }
 
                     @Override
                     public void onSuccess(Boolean result) {
                         if (result && cameraView.mCameraListener != null) {
-                            cameraView.mCameraListener.onRecordSuccess(file);
+                            cameraView.mCameraListener.onRecordSuccess(mVideoFile);
                         }
                         PictureThreadUtils.cancel(PictureThreadUtils.getSinglePool());
                     }
                 });
-            } else if (file.exists() && cameraView.mCameraListener != null) {
-                cameraView.mCameraListener.onRecordSuccess(file);
+            } else if (mVideoFile.exists() && cameraView.mCameraListener != null) {
+                cameraView.mCameraListener.onRecordSuccess(mVideoFile);
             }
         }
 
