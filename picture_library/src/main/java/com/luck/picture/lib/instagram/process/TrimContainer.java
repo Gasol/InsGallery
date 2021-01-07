@@ -571,6 +571,8 @@ public class TrimContainer extends FrameLayout {
             if (trimContainer == null || activity == null) {
                 return;
             }
+            trimContainer.showLoadingView(false);
+
             if (successCode == Transcoder.SUCCESS_TRANSCODED) {
                 trimContainer.mMedia.setDuration(mEndTime - mStartTime);
                 trimContainer.mMedia.setPath(mTranscodeOutputFile.getAbsolutePath());
@@ -582,7 +584,6 @@ public class TrimContainer extends FrameLayout {
             } else if (successCode == Transcoder.SUCCESS_NOT_NEEDED) {
 
             }
-            trimContainer.showLoadingView(false);
         }
 
         @Override

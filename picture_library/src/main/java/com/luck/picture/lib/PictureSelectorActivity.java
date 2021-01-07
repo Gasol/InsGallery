@@ -137,7 +137,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
 
         if (config.isOriginalControl) {
             if (mCbOriginal != null) {
-                mCbOriginal.setChecked(config.isCheckOriginalImage);
+                mCbOriginal.setChecked(config.isOriginalImage);
             }
         }
     }
@@ -224,9 +224,9 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
         }
         if (config.isOriginalControl) {
             mCbOriginal.setVisibility(View.VISIBLE);
-            mCbOriginal.setChecked(config.isCheckOriginalImage);
+            mCbOriginal.setChecked(config.isOriginalImage);
             mCbOriginal.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                config.isCheckOriginalImage = isChecked;
+                config.isOriginalImage = isChecked;
             });
         }
     }
@@ -786,7 +786,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
         bundle.putParcelableArrayList(PictureConfig.EXTRA_PREVIEW_SELECT_LIST, (ArrayList<? extends Parcelable>) medias);
         bundle.putParcelableArrayList(PictureConfig.EXTRA_SELECT_LIST, (ArrayList<? extends Parcelable>) selectedImages);
         bundle.putBoolean(PictureConfig.EXTRA_BOTTOM_PREVIEW, true);
-        bundle.putBoolean(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isCheckOriginalImage);
+        bundle.putBoolean(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isOriginalImage);
         bundle.putBoolean(PictureConfig.EXTRA_SHOW_CAMERA, mAdapter.isShowCamera());
         bundle.putString(PictureConfig.EXTRA_IS_CURRENT_DIRECTORY, mTvPictureTitle.getText().toString());
         JumpUtils.startPicturePreviewActivity(getContext(), config.isWeChatStyle, bundle,
@@ -869,7 +869,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
             closeActivity();
             return;
         }
-        if (config.isCheckOriginalImage) {
+        if (config.isOriginalImage) {
             onResult(result);
             return;
         }
@@ -1290,7 +1290,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
         if (config.selectionMode == PictureConfig.SINGLE && config.isSingleDirectReturn) {
             List<LocalMedia> list = new ArrayList<>();
             list.add(media);
-            if (config.enableCrop && PictureMimeType.isHasImage(media.getMimeType()) && !config.isCheckOriginalImage) {
+            if (config.enableCrop && PictureMimeType.isHasImage(media.getMimeType()) && !config.isOriginalImage) {
                 mAdapter.bindSelectData(list);
                 startCrop(media.getPath(), media.getMimeType());
             } else {
@@ -1340,7 +1340,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
             ImagesObservable.getInstance().savePreviewMediaData(new ArrayList<>(previewImages));
             bundle.putParcelableArrayList(PictureConfig.EXTRA_SELECT_LIST, (ArrayList<? extends Parcelable>) selectedData);
             bundle.putInt(PictureConfig.EXTRA_POSITION, position);
-            bundle.putBoolean(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isCheckOriginalImage);
+            bundle.putBoolean(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isOriginalImage);
             bundle.putBoolean(PictureConfig.EXTRA_SHOW_CAMERA, mAdapter.isShowCamera());
             bundle.putLong(PictureConfig.EXTRA_BUCKET_ID, ValueOf.toLong(mTvPictureTitle.getTag(R.id.view_tag)));
             bundle.putInt(PictureConfig.EXTRA_PAGE, mPage);
@@ -1475,8 +1475,8 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
             return;
         }
         if (config.isOriginalControl) {
-            config.isCheckOriginalImage = data.getBooleanExtra(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isCheckOriginalImage);
-            mCbOriginal.setChecked(config.isCheckOriginalImage);
+            config.isOriginalImage = data.getBooleanExtra(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isOriginalImage);
+            mCbOriginal.setChecked(config.isOriginalImage);
         }
         List<LocalMedia> list = data.getParcelableArrayListExtra(PictureConfig.EXTRA_SELECT_LIST);
         if (mAdapter != null && list != null) {
@@ -1493,7 +1493,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                             break;
                         }
                     }
-                    if (imageSize <= 0 || !config.isCompress || config.isCheckOriginalImage) {
+                    if (imageSize <= 0 || !config.isCompress || config.isOriginalImage) {
                         onResult(list);
                     } else {
                         compressImage(list);
@@ -1502,7 +1502,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                     // Determine if the resource is of the same type
                     String mimeType = list.size() > 0 ? list.get(0).getMimeType() : "";
                     if (config.isCompress && PictureMimeType.isHasImage(mimeType)
-                            && !config.isCheckOriginalImage) {
+                            && !config.isOriginalImage) {
                         compressImage(list);
                     } else {
                         onResult(list);

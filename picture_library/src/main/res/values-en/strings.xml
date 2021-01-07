@@ -3,7 +3,7 @@
     <string name="picture_camera_roll_num">%1$s (%2$d)</string>
     <string name="picture_cancel">Cancel</string>
     <string name="picture_take_picture">Shot</string>
-    <string name="picture_rule">Cannot select image or video at the same time</string>
+    <string name="picture_rule">Cannot select image and video at the same time</string>
     <string name="picture_min_video_num">Video Selection Cannot%1$sNumber</string>
     <string name="picture_message_max_num">Select up to %1$s images</string>
     <string name="picture_message_audio_max_num">Select up to %1$s Audio</string>

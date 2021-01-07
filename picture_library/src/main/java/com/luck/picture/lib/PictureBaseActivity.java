@@ -702,7 +702,7 @@ public abstract class PictureBaseActivity extends AppCompatActivity {
      */
     protected void handlerResult(List<LocalMedia> result) {
         if (config.isCompress
-                && !config.isCheckOriginalImage) {
+                && !config.isOriginalImage) {
             compressImage(result);
         } else {
             onResult(result);
@@ -769,7 +769,7 @@ public abstract class PictureBaseActivity extends AppCompatActivity {
                     && selectionMedias != null) {
                 images.addAll(images.size() > 0 ? images.size() - 1 : 0, selectionMedias);
             }
-            if (config.isCheckOriginalImage) {
+            if (config.isOriginalImage) {
                 int size = images.size();
                 for (int i = 0; i < size; i++) {
                     LocalMedia media = images.get(i);
@@ -814,7 +814,7 @@ public abstract class PictureBaseActivity extends AppCompatActivity {
                     } else if (media.isCut() && media.isCompressed()) {
                         media.setAndroidQToPath(media.getCompressPath());
                     }
-                    if (config.isCheckOriginalImage) {
+                    if (config.isOriginalImage) {
                         media.setOriginal(true);
                         media.setOriginalPath(media.getAndroidQToPath());
                     }

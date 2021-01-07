@@ -493,7 +493,9 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
             }
             selectImages.add(image);
             image.setNum(selectImages.size());
-            VoiceUtils.getInstance().play();
+            if (config.isMultiCheckSound) {
+                VoiceUtils.getInstance().play();
+            }
             if (contentHolder.ivPicture.getScaleX() == 1f) {
                 zoom(contentHolder.ivPicture, config.zoomAnim);
             }
@@ -560,12 +562,9 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
         }
     }
 
-    public void clearSelection() {
-        selectImages.clear();
-    }
-
     public interface OnPhotoSelectChangedListener {
         void onItemChecked(int position, LocalMedia image, boolean isCheck);
+
         /**
          * 拍照回调
          */

@@ -110,7 +110,7 @@ public final class PictureSelectionConfig implements Parcelable {
     public static OnCustomCameraInterfaceListener onCustomCameraInterfaceListener;
     public List<LocalMedia> selectionMedias;
     public String cameraFileName;
-    public boolean isCheckOriginalImage;
+    public boolean isOriginalImage;
     @Deprecated
     public int overrideWidth;
     @Deprecated
@@ -152,6 +152,8 @@ public final class PictureSelectionConfig implements Parcelable {
     public boolean isAndroidQChangeWH;
     public boolean isAndroidQChangeVideoWH;
     public boolean isQuickCapture;
+    public boolean isMultiCheckSound;
+    public boolean isEnableFilter;
     /**
      * 内测专用###########
      */
@@ -193,7 +195,7 @@ public final class PictureSelectionConfig implements Parcelable {
         isCamera = true;
         isGif = false;
         focusAlpha = false;
-        isCheckOriginalImage = false;
+        isOriginalImage = false;
         isSingleDirectReturn = false;
         enablePreview = true;
         enPreviewVideo = true;
@@ -263,6 +265,8 @@ public final class PictureSelectionConfig implements Parcelable {
         isAndroidQChangeWH = true;
         isAndroidQChangeVideoWH = false;
         isQuickCapture = true;
+        isMultiCheckSound = false;
+        isEnableFilter = false;
     }
 
     public static PictureSelectionConfig getInstance() {
@@ -373,7 +377,7 @@ public final class PictureSelectionConfig implements Parcelable {
         dest.writeParcelable(this.uCropOptions, flags);
         dest.writeTypedList(this.selectionMedias);
         dest.writeString(this.cameraFileName);
-        dest.writeByte(this.isCheckOriginalImage ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.isOriginalImage ? (byte) 1 : (byte) 0);
         dest.writeInt(this.overrideWidth);
         dest.writeInt(this.overrideHeight);
         dest.writeFloat(this.sizeMultiplier);
@@ -479,7 +483,7 @@ public final class PictureSelectionConfig implements Parcelable {
         this.uCropOptions = in.readParcelable(UCropOptions.class.getClassLoader());
         this.selectionMedias = in.createTypedArrayList(LocalMedia.CREATOR);
         this.cameraFileName = in.readString();
-        this.isCheckOriginalImage = in.readByte() != 0;
+        this.isOriginalImage = in.readByte() != 0;
         this.overrideWidth = in.readInt();
         this.overrideHeight = in.readInt();
         this.sizeMultiplier = in.readFloat();

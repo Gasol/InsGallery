@@ -339,7 +339,7 @@ public class PictureSelectorCameraEmptyActivity extends PictureBaseActivity {
         if (config.enableCrop && isHasImage) {
             config.originalPath = config.cameraPath;
             startCrop(config.cameraPath, media.getMimeType());
-        } else if (config.isCompress && isHasImage && !config.isCheckOriginalImage) {
+        } else if (config.isCompress && isHasImage && !config.isOriginalImage) {
             List<LocalMedia> result = new ArrayList<>();
             result.add(media);
             compressImage(result);

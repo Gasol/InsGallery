@@ -233,7 +233,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                         }
                     }
                     if (mAdapter != null) {
-                        mAdapter.clearSelection();
+                        mAdapter.bindSelectImages(selectionMedias);
                     }
                 }
                 if (mAdapter != null) {
@@ -848,7 +848,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
             }
         }
 
-        if (config.isCheckOriginalImage) {
+        if (config.isOriginalImage) {
             onResult(result);
             return;
         }
@@ -1506,7 +1506,10 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
             }
 
             PictureSelectorInstagramStyleActivity activity = mActivityWeakReference.get();
-            if (activity != null) {
+            if (!mConfig.isEnableFilter) {
+                activity.onResult(result);
+            }
+            else if (activity != null) {
                 activity.dismissDialog();
                 InstagramMediaProcessActivity.launchActivity(activity, mConfig, result, bundle, InstagramMediaProcessActivity.REQUEST_MULTI_IMAGE_PROCESS);
             }
@@ -1647,7 +1650,11 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
             bundle.putBoolean(InstagramMediaProcessActivity.EXTRA_ASPECT_RATIO, mPreviewContainer.isAspectRatio());
         }
 
-        InstagramMediaProcessActivity.launchActivity(this, config, result, bundle, InstagramMediaProcessActivity.REQUEST_SINGLE_IMAGE_PROCESS);
+        if (!config.isEnableFilter) {
+            onResult(result);
+        } else {
+            InstagramMediaProcessActivity.launchActivity(this, config, result, bundle, InstagramMediaProcessActivity.REQUEST_SINGLE_IMAGE_PROCESS);
+        }
     }
 
     /**
@@ -1677,7 +1684,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                             break;
                         }
                     }
-                    if (imageSize <= 0 || !config.isCompress || config.isCheckOriginalImage) {
+                    if (imageSize <= 0 || !config.isCompress || config.isOriginalImage) {
                         // 全是视频
                         onResult(list);
                     } else {
@@ -1688,7 +1695,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                     // 取出第1个判断是否是图片，视频和图片只能二选一，不必考虑图片和视频混合
                     String mimeType = list.size() > 0 ? list.get(0).getMimeType() : "";
                     if (config.isCompress && PictureMimeType.isHasImage(mimeType)
-                            && !config.isCheckOriginalImage) {
+                            && !config.isOriginalImage) {
                         compressImage(list);
                     } else {
                         onResult(list);
