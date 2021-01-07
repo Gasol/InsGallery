@@ -205,7 +205,7 @@ public abstract class PictureBaseActivity extends AppCompatActivity {
             if (PictureSelectionConfig.listener == null) {
                 PictureSelectorEngine baseEngine = PictureAppMaster.getInstance().getPictureSelectorEngine();
                 if (baseEngine != null) {
-                    OnResultCallbackListener<LocalMedia> listener = baseEngine.getResultCallbackListener();
+                    OnResultCallbackListener listener = baseEngine.getResultCallbackListener();
                     PictureSelectionConfig.listener = listener;
                 }
             }

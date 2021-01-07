@@ -25,8 +25,8 @@ public class PictureSelectorEngineImp implements PictureSelectorEngine {
     }
 
     @Override
-    public OnResultCallbackListener<LocalMedia> getResultCallbackListener() {
-        return new OnResultCallbackListener<LocalMedia>() {
+    public OnResultCallbackListener getResultCallbackListener() {
+        return new OnResultCallbackListener() {
             @Override
             public void onResult(List<LocalMedia> result) {
                 // TODO 这种情况是内存极度不足的情况下，比如开启开发者选项中的不保留活动或后台进程限制，导致OnResultCallbackListener被回收

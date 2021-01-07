@@ -486,7 +486,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return this;
     }
 
-    private static class OnResultCallbackListenerImpl implements OnResultCallbackListener<LocalMedia> {
+    private static class OnResultCallbackListenerImpl implements OnResultCallbackListener {
         private WeakReference<GridImageAdapter> mAdapter;
 
         public OnResultCallbackListenerImpl(GridImageAdapter adapter) {
