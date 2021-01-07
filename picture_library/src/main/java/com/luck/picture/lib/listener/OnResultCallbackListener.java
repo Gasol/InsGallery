@@ -9,7 +9,7 @@ import java.util.List;
  * @date：2020-01-14 17:08
  * @describe：onResult Callback Listener
  */
-public interface OnResultCallbackListener<LocalMedia> {
+public interface OnResultCallbackListener {
     /**
      * return LocalMedia result
      *
