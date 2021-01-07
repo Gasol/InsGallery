@@ -213,8 +213,8 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                     config.isSingleDirectReturn = false;
                     if (mInstagramViewPager != null) {
                         mInstagramGallery.setInitGalleryHeight();
-                        mInstagramViewPager.setScrollEnable(false);
                         if (config.isQuickCapture) {
+                            mInstagramViewPager.setScrollEnable(false);
                             mInstagramViewPager.displayTabLayout(false);
                         }
                     }
@@ -227,8 +227,8 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                     config.isSingleDirectReturn = true;
                     if (mInstagramViewPager != null) {
                         mInstagramGallery.setInitGalleryHeight();
-                        mInstagramViewPager.setScrollEnable(true);
                         if (config.isQuickCapture) {
+                            mInstagramViewPager.setScrollEnable(true);
                             mInstagramViewPager.displayTabLayout(true);
                         }
                     }
