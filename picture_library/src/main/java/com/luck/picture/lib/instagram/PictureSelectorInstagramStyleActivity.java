@@ -1423,7 +1423,6 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         } else {
             // image
             if (media != null) {
-                mPreviewContainer.checkModel(InstagramPreviewContainer.PLAY_IMAGE_MODE);
                 final String path;
 //                if (media.isCut() && !media.isCompressed()) {
 //                    // 裁剪过
@@ -1440,7 +1439,9 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                 String suffix = mimeType.replace("image/", ".");
                 File file = new File(PictureFileUtils.getDiskCacheDir(this),
                         TextUtils.isEmpty(config.renameCropFileName) ? DateUtils.getCreateFileName("IMG_") + suffix : config.renameCropFileName);
-                mPreviewContainer.setImageUri(uri, Uri.fromFile(file));
+                mPreviewContainer.setImageUri(uri, Uri.fromFile(file), () -> {
+                    mPreviewContainer.checkModel(InstagramPreviewContainer.PLAY_IMAGE_MODE);
+                });
             }
         }
     }

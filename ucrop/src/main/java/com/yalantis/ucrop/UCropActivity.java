@@ -262,7 +262,7 @@ public class UCropActivity extends AppCompatActivity {
                 boolean isOnTouch = isOnTouch(inputUri);
                 mGestureCropImageView.setRotateEnabled(isOnTouch ? isRotateEnabled : isOnTouch);
                 mGestureCropImageView.setScaleEnabled(isOnTouch ? isScaleEnabled : isOnTouch);
-                mGestureCropImageView.setImageUri(inputUri, outputUri);
+                mGestureCropImageView.setImageUri(inputUri, outputUri, null);
             } catch (Exception e) {
                 setResultError(e);
                 onBackPressed();

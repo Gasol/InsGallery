@@ -341,7 +341,7 @@ public class InstagramPreviewContainer extends FrameLayout {
         return mAspectRadio;
     }
 
-    public void setImageUri(@NonNull Uri inputUri, @Nullable Uri outputUri) {
+    public void setImageUri(@NonNull Uri inputUri, @Nullable Uri outputUri, TransformImageView.OnImageLoadedListener onImageLoadedListener) {
         if (mPlayMode != PLAY_IMAGE_MODE) {
             return;
         }
@@ -349,7 +349,7 @@ public class InstagramPreviewContainer extends FrameLayout {
             try {
                 boolean isOnTouch = isOnTouch(inputUri);
                 mGestureCropImageView.setScaleEnabled(isOnTouch);
-                mGestureCropImageView.setImageUri(inputUri, outputUri);
+                mGestureCropImageView.setImageUri(inputUri, outputUri, onImageLoadedListener);
             } catch (Exception e) {
                 e.printStackTrace();
             }
