@@ -1423,6 +1423,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         } else {
             // image
             if (media != null) {
+                mPreviewContainer.setPlayMode(InstagramPreviewContainer.PLAY_IMAGE_MODE);
                 final String path;
 //                if (media.isCut() && !media.isCompressed()) {
 //                    // 裁剪过

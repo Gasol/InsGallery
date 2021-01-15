@@ -402,14 +402,9 @@ public class InstagramPreviewContainer extends FrameLayout {
         List<Animator> animators = new ArrayList<>();
         if (mode == PLAY_IMAGE_MODE) {
             InstagramUtils.setViewVisibility(mUCropView, View.VISIBLE);
+            InstagramUtils.setViewVisibility(mVideoView, View.GONE);
+            InstagramUtils.setViewVisibility(mThumbView, View.GONE);
             animators.add(ObjectAnimator.ofFloat(mUCropView, "alpha", 0.1f, 1.0f));
-            mAnimatorSet.addListener(new AnimatorListenerImpl() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    InstagramUtils.setViewVisibility(mVideoView, View.GONE);
-                    InstagramUtils.setViewVisibility(mThumbView, View.GONE);
-                }
-            });
         } else if (mode == PLAY_VIDEO_MODE) {
             InstagramUtils.setViewVisibility(mVideoView, View.VISIBLE);
             InstagramUtils.setViewVisibility(mThumbView, View.VISIBLE);
@@ -420,6 +415,10 @@ public class InstagramPreviewContainer extends FrameLayout {
         mAnimatorSet.setDuration(800);
         mAnimatorSet.playTogether(animators);
         mAnimatorSet.start();
+    }
+
+    public void setPlayMode(int mode) {
+        mPlayMode = mode;
     }
 
     /**
