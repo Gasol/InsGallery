@@ -201,11 +201,12 @@ public class InstagramPreviewContainer extends FrameLayout {
 
         mRatioView = new ImageView(context);
 
-        CombinedDrawable ratiodDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), 0x88000000, Color.BLACK),
+        CombinedDrawable ratioDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), 0x88000000, Color.BLACK),
                 context.getResources().getDrawable(R.drawable.discover_telescopic).mutate());
-        ratiodDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
+        ratioDrawable.setIconSize(42, 42);
+        ratioDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
 
-        mRatioView.setImageDrawable(ratiodDrawable);
+        mRatioView.setImageDrawable(ratioDrawable);
         FrameLayout.LayoutParams ratioLayoutParams = new LayoutParams(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30), Gravity.BOTTOM | Gravity.LEFT);
         ratioLayoutParams.leftMargin = ScreenUtils.dip2px(context, 15);
         ratioLayoutParams.bottomMargin = ScreenUtils.dip2px(context, 12);
@@ -310,11 +311,11 @@ public class InstagramPreviewContainer extends FrameLayout {
 
     public static float getInstagramAspectRatio(int width, int height) {
         float aspectRatio = 0;
-        if (height > width * 1.266f) {
-            aspectRatio = width / (width * 1.266f);
-        } else if (width > height * 1.9f) {
-            aspectRatio = height * 1.9f / height;
-        }
+//        if (height > width * 1.266f) {
+//            aspectRatio = width / (width * 1.266f);
+//        } else if (width > height * 1.9f) {
+//            aspectRatio = height * 1.9f / height;
+//        }
         return aspectRatio;
     }
 

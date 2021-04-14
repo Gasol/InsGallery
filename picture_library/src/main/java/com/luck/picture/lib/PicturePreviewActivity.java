@@ -125,6 +125,7 @@ public class PicturePreviewActivity extends PictureBaseActivity implements
         btnCheck.setOnClickListener(this);
         selectData = getIntent().
                 getParcelableArrayListExtra(PictureConfig.EXTRA_SELECT_LIST);
+        selectData = selectData == null ? new ArrayList<>() : selectData;
         isBottomPreview = getIntent().
                 getBooleanExtra(PictureConfig.EXTRA_BOTTOM_PREVIEW, false);
         isShowCamera = getIntent().getBooleanExtra(PictureConfig.EXTRA_SHOW_CAMERA, config.isCamera);
@@ -189,7 +190,7 @@ public class PicturePreviewActivity extends PictureBaseActivity implements
                 if (config.isOriginalControl) {
                     boolean isHasVideo = PictureMimeType.isHasVideo(media.getMimeType());
                     mCbOriginal.setVisibility(isHasVideo ? View.GONE : View.VISIBLE);
-                    mCbOriginal.setChecked(config.isCheckOriginalImage);
+                    mCbOriginal.setChecked(config.isOriginalImage);
                 }
                 onPageSelectedChange(media);
 
@@ -210,12 +211,12 @@ public class PicturePreviewActivity extends PictureBaseActivity implements
         // 原图
         if (config.isOriginalControl) {
             boolean isCheckOriginal = getIntent()
-                    .getBooleanExtra(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isCheckOriginalImage);
+                    .getBooleanExtra(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isOriginalImage);
             mCbOriginal.setVisibility(View.VISIBLE);
-            config.isCheckOriginalImage = isCheckOriginal;
-            mCbOriginal.setChecked(config.isCheckOriginalImage);
+            config.isOriginalImage = isCheckOriginal;
+            mCbOriginal.setChecked(config.isOriginalImage);
             mCbOriginal.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                config.isCheckOriginalImage = isChecked;
+                config.isOriginalImage = isChecked;
             });
         }
     }
@@ -829,7 +830,7 @@ public class PicturePreviewActivity extends PictureBaseActivity implements
         }
         isCompleteOrSelected = true;
         isChangeSelectedData = true;
-        if (config.isCheckOriginalImage) {
+        if (config.isOriginalImage) {
             onBackPressed();
             return;
         }
@@ -992,7 +993,7 @@ public class PicturePreviewActivity extends PictureBaseActivity implements
         }
         // 把是否原图标识返回，主要用于开启了开发者选项不保留活动或内存不足时 原图选中状态没有全局同步问题
         if (config.isOriginalControl) {
-            intent.putExtra(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isCheckOriginalImage);
+            intent.putExtra(PictureConfig.EXTRA_CHANGE_ORIGINAL, config.isOriginalImage);
         }
         setResult(RESULT_CANCELED, intent);
     }

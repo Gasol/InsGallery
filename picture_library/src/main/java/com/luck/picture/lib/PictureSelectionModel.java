@@ -754,8 +754,35 @@ public class PictureSelectionModel {
     }
 
     /**
+     * @param maxVideoResolution max resolution for the output video
+     * @return PictureSelectionModel
+     */
+    public PictureSelectionModel maxVideoResolution(int maxVideoResolution) {
+        selectionConfig.maxVideoResolution = maxVideoResolution;
+        return this;
+    }
+
+    /**
+     * @param minFileSizeForCompression min file size for video compression
+     * @return PictureSelectionModel
+     */
+    public PictureSelectionModel minFileSizeForCompression(int minFileSizeForCompression) {
+        selectionConfig.minFileSizeForCompression = minFileSizeForCompression;
+        return this;
+    }
+
+    /**
+     * @param outputVideoBitRatePercent bitrate percentage for the output video
+     * @return PictureSelectionModel
+     */
+    public PictureSelectionModel outputVideoBitRatePercent(double outputVideoBitRatePercent) {
+        selectionConfig.outputVideoBitRatePercent = outputVideoBitRatePercent;
+        return this;
+    }
+
+    /**
      * @param path save path
-     * @return
+     * @return PictureSelectionModel
      */
     public PictureSelectionModel compressSavePath(String path) {
         selectionConfig.compressSavePath = path;

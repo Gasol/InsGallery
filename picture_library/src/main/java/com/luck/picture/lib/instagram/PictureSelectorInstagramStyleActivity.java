@@ -837,7 +837,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
             }
         }
 
-        if (config.isCheckOriginalImage) {
+        if (config.isOriginalImage) {
             onResult(result);
             return;
         }
@@ -1666,7 +1666,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                             break;
                         }
                     }
-                    if (imageSize <= 0 || !config.isCompress || config.isCheckOriginalImage) {
+                    if (imageSize <= 0 || !config.isCompress || config.isOriginalImage) {
                         // 全是视频
                         onResult(list);
                     } else {
@@ -1677,7 +1677,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
                     // 取出第1个判断是否是图片，视频和图片只能二选一，不必考虑图片和视频混合
                     String mimeType = list.size() > 0 ? list.get(0).getMimeType() : "";
                     if (config.isCompress && PictureMimeType.isHasImage(mimeType)
-                            && !config.isCheckOriginalImage) {
+                            && !config.isOriginalImage) {
                         compressImage(list);
                     } else {
                         onResult(list);

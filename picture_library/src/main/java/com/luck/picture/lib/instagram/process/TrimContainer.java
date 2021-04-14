@@ -8,13 +8,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.graphics.Rect;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaMuxer;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
@@ -25,6 +31,24 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.linkedin.android.litr.MediaTransformer;
+import com.linkedin.android.litr.TrackTransform;
+import com.linkedin.android.litr.TransformationListener;
+import com.linkedin.android.litr.analytics.TrackTransformationInfo;
+import com.linkedin.android.litr.codec.MediaCodecDecoder;
+import com.linkedin.android.litr.codec.MediaCodecEncoder;
+import com.linkedin.android.litr.exception.MediaTransformationException;
+import com.linkedin.android.litr.filter.GlFilter;
+import com.linkedin.android.litr.filter.GlFrameRenderFilter;
+import com.linkedin.android.litr.filter.Transform;
+import com.linkedin.android.litr.filter.video.gl.DefaultVideoFrameRenderFilter;
+import com.linkedin.android.litr.io.MediaExtractorMediaSource;
+import com.linkedin.android.litr.io.MediaMuxerMediaTarget;
+import com.linkedin.android.litr.io.MediaRange;
+import com.linkedin.android.litr.io.MediaSource;
+import com.linkedin.android.litr.io.MediaTarget;
+import com.linkedin.android.litr.render.GlVideoRenderer;
+import com.linkedin.android.litr.utils.CodecUtils;
 import com.luck.picture.lib.R;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
@@ -40,20 +64,6 @@ import com.luck.picture.lib.tools.DateUtils;
 import com.luck.picture.lib.tools.ScreenUtils;
 import com.luck.picture.lib.tools.SdkVersionUtils;
 import com.luck.picture.lib.tools.ToastUtils;
-import com.otaliastudios.transcoder.Transcoder;
-import com.otaliastudios.transcoder.TranscoderListener;
-import com.otaliastudios.transcoder.TranscoderOptions;
-import com.otaliastudios.transcoder.resize.AspectRatioResizer;
-import com.otaliastudios.transcoder.resize.FractionResizer;
-import com.otaliastudios.transcoder.resize.PassThroughResizer;
-import com.otaliastudios.transcoder.resize.Resizer;
-import com.otaliastudios.transcoder.sink.DataSink;
-import com.otaliastudios.transcoder.sink.DefaultDataSink;
-import com.otaliastudios.transcoder.source.ClipDataSource;
-import com.otaliastudios.transcoder.source.FilePathDataSource;
-import com.otaliastudios.transcoder.source.UriDataSource;
-import com.otaliastudios.transcoder.strategy.DefaultVideoStrategy;
-import com.otaliastudios.transcoder.strategy.TrackStrategy;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -64,6 +74,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * ================================================
@@ -95,6 +110,11 @@ public class TrimContainer extends FrameLayout {
     private boolean mIsPreviewStart = true;
     private InstagramLoadingDialog mLoadingDialog;
     private Future<Void> mTranscodeFuture;
+    private MediaTransformer mediaTransformer;
+
+    private static final String KEY_ROTATION = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+            ? MediaFormat.KEY_ROTATION
+            : "rotation-degrees";
 
     public TrimContainer(@NonNull Context context, PictureSelectionConfig config, LocalMedia media, VideoView videoView, VideoPauseListener videoPauseListener) {
         super(context);
@@ -116,6 +136,7 @@ public class TrimContainer extends FrameLayout {
         mRecyclerView.setAdapter(mVideoTrimmerAdapter);
         addView(mRecyclerView);
         ObjectAnimator.ofFloat(mRecyclerView, "translationX", ScreenUtils.getScreenWidth(context), 0).setDuration(300).start();
+        mediaTransformer = new MediaTransformer(getContext().getApplicationContext());
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -272,53 +293,220 @@ public class TrimContainer extends FrameLayout {
         long startTimeUS = getStartTime() * 1000;
         long endTimeUS = getEndTime() * 1000;
 
-        File transcodeOutputFile;
-        try {
-            File outputDir = new File(getContext().getExternalFilesDir(Environment.DIRECTORY_MOVIES), "TrimVideos");
-            //noinspection ResultOfMethodCallIgnored
-            outputDir.mkdir();
-            transcodeOutputFile = File.createTempFile(DateUtils.getCreateFileName("trim_"), ".mp4", outputDir);
-        } catch (IOException e) {
-            ToastUtils.s(getContext(), "Failed to create temporary file.");
-            return;
-        }
+        int sizeInMb = (int) (mMedia.getSize() / 1024 / 1024);
 
-        Resizer resizer = new PassThroughResizer();
-        if (mConfig.instagramSelectionConfig.isCropVideo()) {
-            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-            Uri uri;
-            if (SdkVersionUtils.checkedAndroid_Q() && PictureMimeType.isContent(mMedia.getPath())) {
-                uri = Uri.parse(mMedia.getPath());
-            } else {
-                uri = Uri.fromFile(new File(mMedia.getPath()));
-            }
-            mediaMetadataRetriever.setDataSource(getContext(), uri);
-            int videoWidth = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-            int videoHeight = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-            float instagramAspectRatio = InstagramPreviewContainer.getInstagramAspectRatio(videoWidth, videoHeight);
-            mediaMetadataRetriever.release();
-
-            if (isAspectRatio && instagramAspectRatio > 0) {
-                resizer = new AspectRatioResizer(instagramAspectRatio);
-            } else if (!isAspectRatio) {
-                resizer = new AspectRatioResizer(1f);
-            }
-        }
-        TrackStrategy videoStrategy = new DefaultVideoStrategy.Builder()
-                .addResizer(resizer)
-                .addResizer(new FractionResizer(1f))
-                .build();
-
-        DataSink sink = new DefaultDataSink(transcodeOutputFile.getAbsolutePath());
-        TranscoderOptions.Builder builder = Transcoder.into(sink);
-        if (PictureMimeType.isContent(mMedia.getPath())) {
-            builder.addDataSource(new ClipDataSource(new UriDataSource(getContext(), Uri.parse(mMedia.getPath())), startTimeUS, endTimeUS));
+        Uri uri;
+        if (SdkVersionUtils.checkedAndroid_Q() && PictureMimeType.isContent(mMedia.getPath())) {
+            uri = Uri.parse(mMedia.getPath());
         } else {
-            builder.addDataSource(new ClipDataSource(new FilePathDataSource(mMedia.getPath()), startTimeUS, endTimeUS));
+            uri = Uri.fromFile(new File(mMedia.getPath()));
         }
-        mTranscodeFuture = builder.setListener(new TranscoderListenerImpl(this, activity, startTime, endTime, transcodeOutputFile))
-                .setVideoTrackStrategy(videoStrategy)
-                .transcode();
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(getContext(), uri);
+        int videoWidth = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+        int videoHeight = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+        int bitrate = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
+
+        if (!mConfig.instagramSelectionConfig.isProcessVideo()) {
+            if (mConfig.instagramSelectionConfig.isCropVideo()) {
+                int videoRotation = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+                float instagramAspectRatio = InstagramPreviewContainer.getInstagramAspectRatio(
+                        (videoRotation == 90 || videoRotation == 270) ? videoHeight : videoWidth,
+                        (videoRotation == 90 || videoRotation == 270) ? videoWidth : videoHeight
+                );
+
+                if (isAspectRatio && instagramAspectRatio > 0) {
+                    mMedia.setIsRatioOneToOne(false);
+                } else if (!isAspectRatio) {
+                    mMedia.setIsRatioOneToOne(true);
+                }
+            }
+            mediaMetadataRetriever.release();
+            mMedia.setDuration(endTime - startTime);
+            mMedia.setStartTimeUS(startTimeUS);
+            mMedia.setEndTimeUS(endTimeUS);
+            List<LocalMedia> list = new ArrayList<>();
+            list.add(mMedia);
+            activity.showLoadingView(false);
+            activity.setResult(Activity.RESULT_OK, new Intent().putParcelableArrayListExtra(PictureConfig.EXTRA_SELECT_LIST, (ArrayList<? extends Parcelable>) list));
+            activity.finish();
+
+        } else {
+            File transcodeOutputFile;
+            try {
+                File outputDir = new File(getContext().getExternalFilesDir(Environment.DIRECTORY_MOVIES), "TrimVideos");
+                //noinspection ResultOfMethodCallIgnored
+                outputDir.mkdir();
+                transcodeOutputFile = File.createTempFile(DateUtils.getCreateFileName("trim_"), ".mp4", outputDir);
+            } catch (IOException e) {
+                ToastUtils.s(getContext(), "Failed to create temporary file.");
+                return;
+            }
+
+            int newWidth = videoWidth;
+            int newHeight = videoHeight;
+            int newWidthNonRatio = videoWidth;
+            int newHeightNonRatio = videoHeight;
+            int maxResolution = mConfig.maxVideoResolution;
+            float ratio = (float) videoWidth / videoHeight;
+            if (maxResolution > 0) {
+                if (videoWidth > maxResolution || videoHeight > maxResolution) {
+                    if (ratio > 1) {
+                        newWidth = maxResolution;
+                        newWidthNonRatio = newWidth;
+                        newHeight = (int) (maxResolution / ratio);
+                        newHeightNonRatio = newHeight;
+                    } else {
+                        newWidth = (int) (maxResolution * ratio);
+                        newWidthNonRatio = newWidth;
+                        newHeight = maxResolution;
+                        newHeightNonRatio = newHeight;
+                    }
+                }
+            }
+
+            int minResolution = 720;
+            // minimum resolution for mediacodec is 720
+            if (newWidth < minResolution || newHeight < minResolution) {
+                if (ratio > 1) {
+                    newWidth = (int) (minResolution * ratio);
+                    newWidthNonRatio = newWidth;
+                    newHeight = minResolution;
+                    newHeightNonRatio = newHeight;
+                } else {
+                    newWidth = minResolution;
+                    newWidthNonRatio = newWidth;
+                    newHeight = (int) (minResolution / ratio);
+                    newHeightNonRatio = newHeight;
+                }
+            }
+
+            if (!isAspectRatio) {
+                if (newWidth > newHeight) {
+                    if (videoHeight > newWidth) {
+                        newWidth = maxResolution;
+                        newHeight = maxResolution;
+                    } else {
+                        newWidth = videoHeight;
+                        newHeight = videoHeight;
+                    }
+                } else {
+                    if (videoWidth > newHeight) {
+                        newWidth = maxResolution;
+                        newHeight = maxResolution;
+                    } else {
+                        newWidth = videoWidth;
+                        newHeight = videoWidth;
+                    }
+                }
+            }
+
+            try {
+                MediaExtractor mediaExtractor = new MediaExtractor();
+                mediaExtractor.setDataSource(getContext(), uri, null);
+                List<MediaTrackFormat> tracks = new ArrayList<>(mediaExtractor.getTrackCount());
+
+                for (int track = 0; track < mediaExtractor.getTrackCount(); track++) {
+                    MediaFormat mediaFormat = mediaExtractor.getTrackFormat(track);
+                    String mimeType = mediaFormat.getString(MediaFormat.KEY_MIME);
+                    if (mimeType == null) {
+                        continue;
+                    }
+
+                    if (mimeType.startsWith("video")) {
+                        VideoTrackFormat videoTrack = new VideoTrackFormat(track, mimeType);
+                        videoTrack.width = newWidth;
+                        videoTrack.height = newHeight;
+                        videoTrack.duration = getLong(mediaFormat, MediaFormat.KEY_DURATION);
+                        videoTrack.frameRate = getInt(mediaFormat, MediaFormat.KEY_FRAME_RATE);
+                        videoTrack.keyFrameInterval = getInt(mediaFormat, MediaFormat.KEY_I_FRAME_INTERVAL);
+                        videoTrack.rotation = getInt(mediaFormat, KEY_ROTATION, 0);
+                        videoTrack.bitrate = getInt(mediaFormat, MediaFormat.KEY_BIT_RATE);
+                        tracks.add(videoTrack);
+                    } else if (mimeType.startsWith("audio")) {
+                        AudioTrackFormat audioTrack = new AudioTrackFormat(track, mimeType);
+                        audioTrack.channelCount = getInt(mediaFormat, MediaFormat.KEY_CHANNEL_COUNT);
+                        audioTrack.samplingRate = getInt(mediaFormat, MediaFormat.KEY_SAMPLE_RATE);
+                        audioTrack.duration = getLong(mediaFormat, MediaFormat.KEY_DURATION);
+                        audioTrack.bitrate = getInt(mediaFormat, MediaFormat.KEY_BIT_RATE);
+                        tracks.add(audioTrack);
+                    } else {
+                        tracks.add(new GenericTrackFormat(track, mimeType));
+                    }
+                }
+
+                int videoRotation = 0;
+                for (MediaTrackFormat trackFormat : tracks) {
+                    if (trackFormat.mimeType.startsWith("video")) {
+                        videoRotation = ((VideoTrackFormat) trackFormat).rotation;
+                        break;
+                    }
+                }
+                TargetMedia targetMedia = new TargetMedia();
+                targetMedia.setTargetFile(transcodeOutputFile);
+                targetMedia.setTracks(tracks);
+
+                MediaRange mediaRange = new MediaRange(startTimeUS, endTimeUS);
+                MediaSource mediaSource = new MediaExtractorMediaSource(getContext(), uri, mediaRange);
+
+                MediaTarget mediaTarget = new MediaMuxerMediaTarget(transcodeOutputFile.getPath(),
+                        targetMedia.tracks.size(),
+                        videoRotation,
+                        MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+
+                List<TrackTransform> trackTransforms = new ArrayList<>(targetMedia.tracks.size());
+
+                for (TargetTrack targetTrack : targetMedia.tracks) {
+                    if (!targetTrack.shouldInclude) {
+                        continue;
+                    }
+
+                    TrackTransform.Builder trackTransformBuilder = new TrackTransform.Builder(mediaSource,
+                            targetTrack.sourceTrackIndex,
+                            mediaTarget)
+                            .setTargetTrack(trackTransforms.size())
+                            .setEncoder(new MediaCodecEncoder())
+                            .setDecoder(new MediaCodecDecoder());
+
+                    if (targetTrack.format instanceof VideoTrackFormat) {
+                        List<GlFilter> filters = new ArrayList<>();
+
+                        if (!isAspectRatio) {
+                            Transform transform;
+                            if (videoRotation == 0 || videoRotation == 180) {
+                                // landscape
+                                transform = new Transform(new PointF((float) newWidthNonRatio / newHeightNonRatio, 1.0f), new PointF(0.5f, 0.5f), 0);
+                            } else {
+                                // portrait
+                                transform = new Transform(new PointF(1.0f, (float) newWidthNonRatio / newHeightNonRatio), new PointF(0.5f, 0.5f), 0);
+                            }
+                            GlFrameRenderFilter frameRenderFilter = new DefaultVideoFrameRenderFilter(transform);
+                            filters.add(frameRenderFilter);
+                        }
+                        trackTransformBuilder.setRenderer(new GlVideoRenderer(filters));
+                    }
+                    MediaFormat mediaFormat = createMediaFormat(targetTrack);
+                    if (mediaFormat != null && targetTrack.format.mimeType.startsWith("video")) {
+                        if (mConfig.minFileSizeForCompression > 0 && sizeInMb < mConfig.minFileSizeForCompression) {
+                            // set original bitrate
+                            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                        }
+                        mediaFormat.setInteger(MediaFormat.KEY_WIDTH, newWidth);
+                        mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, newHeight);
+                    }
+                    trackTransformBuilder.setTargetFormat(mediaFormat);
+                    trackTransforms.add(trackTransformBuilder.build());
+                }
+
+                mediaTransformer.transform("99999",
+                        trackTransforms,
+                        new TransformationListenerImpl(this, activity, startTime, endTime, transcodeOutputFile, "99999"),
+                        MediaTransformer.GRANULARITY_DEFAULT);
+
+            } catch (IOException | MediaTransformationException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void showLoadingView(boolean isShow) {
@@ -331,6 +519,9 @@ public class TrimContainer extends FrameLayout {
                 mLoadingDialog.setOnCancelListener(dialog -> {
                     if (mTranscodeFuture != null) {
                         mTranscodeFuture.cancel(true);
+                    }
+                    if (mediaTransformer != null) {
+                        mediaTransformer.cancel("99999");
                     }
                 });
             }
@@ -495,6 +686,11 @@ public class TrimContainer extends FrameLayout {
             mTranscodeFuture.cancel(true);
             mTranscodeFuture = null;
         }
+        if (mediaTransformer != null) {
+            mediaTransformer.cancel("99999");
+            mediaTransformer.release();
+            mediaTransformer = null;
+        }
     }
 
     public static class OnSingleBitmapListenerImpl implements getAllFrameTask.OnSingleBitmapListener {
@@ -537,23 +733,30 @@ public class TrimContainer extends FrameLayout {
         void onVideoPause();
     }
 
-    private static class TranscoderListenerImpl implements TranscoderListener {
+    private static class TransformationListenerImpl implements TransformationListener {
         private WeakReference<TrimContainer> mContainerWeakReference;
         private WeakReference<InstagramMediaProcessActivity> mActivityWeakReference;
         private long mStartTime;
         private long mEndTime;
         private File mTranscodeOutputFile;
+        private final String requestId;
 
-        public TranscoderListenerImpl(TrimContainer container, InstagramMediaProcessActivity activity, long startTime, long endTime, File transcodeOutputFile) {
+        public TransformationListenerImpl(TrimContainer container, InstagramMediaProcessActivity activity, long startTime, long endTime, File transcodeOutputFile, String requestId) {
             mContainerWeakReference = new WeakReference<>(container);
             mActivityWeakReference = new WeakReference<>(activity);
             mStartTime = startTime;
             mEndTime = endTime;
             mTranscodeOutputFile = transcodeOutputFile;
+            this.requestId = requestId;
         }
 
         @Override
-        public void onTranscodeProgress(double progress) {
+        public void onStarted(@NonNull String id) {
+
+        }
+
+        @Override
+        public void onProgress(@NonNull String id, float progress) {
             TrimContainer trimContainer = mContainerWeakReference.get();
             if (trimContainer == null) {
                 return;
@@ -565,13 +768,15 @@ public class TrimContainer extends FrameLayout {
         }
 
         @Override
-        public void onTranscodeCompleted(int successCode) {
-            TrimContainer trimContainer = mContainerWeakReference.get();
-            InstagramMediaProcessActivity activity = mActivityWeakReference.get();
-            if (trimContainer == null || activity == null) {
-                return;
-            }
-            if (successCode == Transcoder.SUCCESS_TRANSCODED) {
+        public void onCompleted(@NonNull String id, @Nullable List<TrackTransformationInfo> trackTransformationInfos) {
+            if (TextUtils.equals(requestId, id)) {
+                TrimContainer trimContainer = mContainerWeakReference.get();
+                InstagramMediaProcessActivity activity = mActivityWeakReference.get();
+                if (trimContainer == null || activity == null) {
+                    return;
+                }
+                trimContainer.showLoadingView(false);
+
                 trimContainer.mMedia.setDuration(mEndTime - mStartTime);
                 trimContainer.mMedia.setPath(mTranscodeOutputFile.getAbsolutePath());
                 trimContainer.mMedia.setAndroidQToPath(SdkVersionUtils.checkedAndroid_Q() ? mTranscodeOutputFile.getAbsolutePath() : trimContainer.mMedia.getAndroidQToPath());
@@ -579,14 +784,12 @@ public class TrimContainer extends FrameLayout {
                 list.add(trimContainer.mMedia);
                 activity.setResult(Activity.RESULT_OK, new Intent().putParcelableArrayListExtra(PictureConfig.EXTRA_SELECT_LIST, (ArrayList<? extends Parcelable>) list));
                 activity.finish();
-            } else if (successCode == Transcoder.SUCCESS_NOT_NEEDED) {
-
+                trimContainer.showLoadingView(false);
             }
-            trimContainer.showLoadingView(false);
         }
 
         @Override
-        public void onTranscodeCanceled() {
+        public void onCancelled(@NonNull String id, @Nullable List<TrackTransformationInfo> trackTransformationInfos) {
             TrimContainer trimContainer = mContainerWeakReference.get();
             if (trimContainer == null) {
                 return;
@@ -595,14 +798,251 @@ public class TrimContainer extends FrameLayout {
         }
 
         @Override
-        public void onTranscodeFailed(@NonNull Throwable exception) {
+        public void onError(@NonNull String id, @Nullable Throwable cause, @Nullable List<TrackTransformationInfo> trackTransformationInfos) {
             TrimContainer trimContainer = mContainerWeakReference.get();
             if (trimContainer == null) {
                 return;
             }
-            exception.printStackTrace();
+            if (cause != null) {
+                cause.printStackTrace();
+            }
             ToastUtils.s(trimContainer.getContext(), trimContainer.getContext().getString(R.string.video_clip_failed));
             trimContainer.showLoadingView(false);
         }
+    }
+
+    private int getInt(@NonNull MediaFormat mediaFormat, @NonNull String key) {
+        return getInt(mediaFormat, key, -1);
+    }
+
+    private int getInt(@NonNull MediaFormat mediaFormat, @NonNull String key, int defaultValue) {
+        if (mediaFormat.containsKey(key)) {
+            return mediaFormat.getInteger(key);
+        }
+        return defaultValue;
+    }
+
+    private long getLong(@NonNull MediaFormat mediaFormat, @NonNull String key) {
+        if (mediaFormat.containsKey(key)) {
+            return mediaFormat.getLong(key);
+        }
+        return -1;
+    }
+
+    @Nullable
+    private MediaFormat createMediaFormat(@Nullable TargetTrack targetTrack) {
+        MediaFormat mediaFormat = null;
+        if (targetTrack != null && targetTrack.format != null) {
+            mediaFormat = new MediaFormat();
+            if (targetTrack.format.mimeType.startsWith("video")) {
+                VideoTrackFormat trackFormat = (VideoTrackFormat) targetTrack.format;
+                String mimeType = CodecUtils.MIME_TYPE_VIDEO_AVC;
+                mediaFormat.setString(MediaFormat.KEY_MIME, mimeType);
+                mediaFormat.setInteger(MediaFormat.KEY_WIDTH, trackFormat.width);
+                mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, trackFormat.height);
+                mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, trackFormat.bitrate);
+                mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, trackFormat.keyFrameInterval);
+                mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, trackFormat.frameRate);
+            } else if (targetTrack.format.mimeType.startsWith("audio")) {
+                AudioTrackFormat trackFormat = (AudioTrackFormat) targetTrack.format;
+                mediaFormat.setString(MediaFormat.KEY_MIME, trackFormat.mimeType);
+                mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, trackFormat.channelCount);
+                mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, trackFormat.samplingRate);
+                mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, trackFormat.bitrate);
+            }
+        }
+
+        return mediaFormat;
+    }
+}
+
+class MediaTrackFormat {
+
+    public int index;
+    public String mimeType;
+
+    MediaTrackFormat(int index, @NonNull String mimeType) {
+        this.index = index;
+        this.mimeType = mimeType;
+    }
+
+    MediaTrackFormat(@NonNull MediaTrackFormat mediaTrackFormat) {
+        this.index = mediaTrackFormat.index;
+        this.mimeType = mediaTrackFormat.mimeType;
+    }
+}
+
+class VideoTrackFormat extends MediaTrackFormat {
+
+    public int width;
+    public int height;
+    public int bitrate;
+    public int frameRate;
+    public int keyFrameInterval;
+    public long duration;
+    public int rotation;
+
+    public VideoTrackFormat(int index, @NonNull String mimeType) {
+        super(index, mimeType);
+    }
+
+    public VideoTrackFormat(@NonNull VideoTrackFormat videoTrackFormat) {
+        super(videoTrackFormat);
+        this.width = videoTrackFormat.width;
+        this.height = videoTrackFormat.height;
+        this.bitrate = videoTrackFormat.bitrate;
+        this.frameRate = videoTrackFormat.frameRate;
+        this.keyFrameInterval = videoTrackFormat.keyFrameInterval;
+        this.duration = videoTrackFormat.duration;
+        this.rotation = videoTrackFormat.rotation;
+    }
+}
+
+class AudioTrackFormat extends MediaTrackFormat {
+
+    public int channelCount;
+    public int samplingRate;
+    public int bitrate;
+    public long duration;
+
+    public AudioTrackFormat(int index, @NonNull String mimeType) {
+        super(index, mimeType);
+    }
+
+    public AudioTrackFormat(@NonNull AudioTrackFormat audioTrackFormat) {
+        super(audioTrackFormat);
+        this.channelCount = audioTrackFormat.channelCount;
+        this.samplingRate = audioTrackFormat.samplingRate;
+        this.bitrate = audioTrackFormat.bitrate;
+        this.duration = audioTrackFormat.duration;
+    }
+}
+
+class GenericTrackFormat extends MediaTrackFormat {
+
+    public GenericTrackFormat(int index, @NonNull String mimeType) {
+        super(index, mimeType);
+    }
+}
+
+class TargetMedia {
+
+    public static final int DEFAULT_VIDEO_WIDTH = 1280;
+    public static final int DEFAULT_VIDEO_HEIGHT = 720;
+    public static final int DEFAULT_VIDEO_BITRATE = 2500000;
+    public static final int DEFAULT_KEY_FRAME_INTERVAL = 5;
+    public static final int DEFAULT_AUDIO_BITRATE = 128000;
+
+    public File targetFile;
+    public List<TargetTrack> tracks = new ArrayList<>();
+    public Uri backgroundImageUri;
+    public GlFilter filter;
+
+    public void setTracks(@NonNull List<MediaTrackFormat> sourceTracks) {
+        tracks = new ArrayList<>(sourceTracks.size());
+        for (MediaTrackFormat sourceTrackFormat : sourceTracks) {
+            TargetTrack targetTrack;
+            if (sourceTrackFormat instanceof VideoTrackFormat) {
+                VideoTrackFormat trackFormat = new VideoTrackFormat((VideoTrackFormat) sourceTrackFormat);
+                trackFormat.width = DEFAULT_VIDEO_WIDTH;
+                trackFormat.height = DEFAULT_VIDEO_HEIGHT;
+                trackFormat.bitrate = DEFAULT_VIDEO_BITRATE;
+                trackFormat.keyFrameInterval = DEFAULT_KEY_FRAME_INTERVAL;
+                targetTrack = new TargetVideoTrack(sourceTrackFormat.index,
+                        true,
+                        false,
+                        trackFormat);
+            } else if (sourceTrackFormat instanceof AudioTrackFormat) {
+                AudioTrackFormat trackFormat = new AudioTrackFormat((AudioTrackFormat) sourceTrackFormat);
+                trackFormat.bitrate = DEFAULT_AUDIO_BITRATE;
+                targetTrack = new TargetAudioTrack(sourceTrackFormat.index,
+                        true,
+                        false,
+                        trackFormat);
+            } else {
+                targetTrack = new TargetTrack(sourceTrackFormat.index,
+                        true,
+                        false,
+                        new MediaTrackFormat(sourceTrackFormat));
+            }
+            tracks.add(targetTrack);
+        }
+    }
+
+    public void setTargetFile(@NonNull File targetFile) {
+        this.targetFile = targetFile;
+    }
+
+    public int getIncludedTrackCount() {
+        int trackCount = 0;
+        for (TargetTrack track : tracks) {
+            if (track.shouldInclude) {
+                trackCount++;
+            }
+        }
+        return trackCount;
+    }
+
+    public void setOverlayImageUri(@NonNull Uri overlayImageUri) {
+        for (TargetTrack targetTrack : tracks) {
+            if (targetTrack instanceof TargetVideoTrack) {
+                ((TargetVideoTrack) targetTrack).overlay = overlayImageUri;
+            }
+        }
+    }
+
+    @Nullable
+    public Uri getVideoOverlay() {
+        for (TargetTrack targetTrack : tracks) {
+            if ((targetTrack instanceof TargetVideoTrack) && ((TargetVideoTrack) targetTrack).overlay != null) {
+                return ((TargetVideoTrack) targetTrack).overlay;
+            }
+        }
+        return null;
+    }
+
+}
+
+class TargetTrack {
+    public int sourceTrackIndex;
+    public boolean shouldInclude;
+    public boolean shouldTranscode;
+    public MediaTrackFormat format;
+
+    public TargetTrack(int sourceTrackIndex, boolean shouldInclude, boolean shouldTranscode, @NonNull MediaTrackFormat format) {
+        this.sourceTrackIndex = sourceTrackIndex;
+        this.shouldInclude = shouldInclude;
+        this.shouldTranscode = shouldTranscode;
+        this.format = format;
+    }
+}
+
+class TargetVideoTrack extends TargetTrack {
+
+    public boolean shouldApplyOverlay;
+    public Uri overlay;
+
+    public TargetVideoTrack(int sourceTrackIndex,
+                            boolean shouldInclude,
+                            boolean shouldTranscode,
+                            VideoTrackFormat format) {
+        super(sourceTrackIndex, shouldInclude, shouldTranscode, format);
+    }
+
+    public VideoTrackFormat getTrackFormat() {
+        return (VideoTrackFormat) format;
+    }
+}
+
+class TargetAudioTrack extends TargetTrack {
+    public TargetAudioTrack(int sourceTrackIndex,
+                            boolean shouldInclude,
+                            boolean shouldTranscode,
+                            AudioTrackFormat format) {
+        super(sourceTrackIndex, shouldInclude, shouldTranscode, format);
+    }
+
+    public AudioTrackFormat getTrackFormat() {
+        return (AudioTrackFormat) format;
     }
 }

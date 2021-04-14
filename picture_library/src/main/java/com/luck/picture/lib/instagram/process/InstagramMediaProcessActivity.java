@@ -101,6 +101,7 @@ public class InstagramMediaProcessActivity extends PictureBaseActivity {
     protected void initWidgets() {
         if (mSelectMedia == null && getIntent() != null) {
             mSelectMedia = getIntent().getParcelableArrayListExtra(PictureConfig.EXTRA_SELECT_LIST);
+            mSelectMedia = mSelectMedia == null ? new ArrayList<>() : mSelectMedia;
         }
 
         if (mSelectMedia == null || mSelectMedia.isEmpty()) {

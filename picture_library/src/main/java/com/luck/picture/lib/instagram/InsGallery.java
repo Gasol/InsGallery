@@ -103,7 +103,13 @@ public final class InsGallery {
 
 
     public static PictureSelectionModel applyInstagramOptions(Context context, PictureSelectionModel selectionModel) {
-        return applyInstagramOptions(context, InstagramSelectionConfig.createConfig().setCurrentTheme(currentTheme), selectionModel);
+        return applyInstagramOptions(
+                context,
+                InstagramSelectionConfig.createConfig()
+                        .setCurrentTheme(currentTheme),
+//                        .setProcessVideoEnabled(false),
+                selectionModel
+        );
     }
 
     @SuppressLint("SourceLockedOrientationActivity")
@@ -156,6 +162,8 @@ public final class InsGallery {
                 //.scaleEnabled(false)// 裁剪是否可放大缩小图片
                 //.videoQuality()// 视频录制质量 0 or 1
                 //.videoSecond()//显示多少秒以内的视频or音频也可适用
+                .isQuickCapture(false)
+                .maxVideoResolution(1080)
                 ;
     }
 

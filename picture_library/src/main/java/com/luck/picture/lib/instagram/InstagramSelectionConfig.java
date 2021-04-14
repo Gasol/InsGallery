@@ -16,6 +16,7 @@ import com.luck.picture.lib.config.PictureSelectionConfig;
 public final class InstagramSelectionConfig implements Parcelable {
     private int currentTheme = InsGallery.THEME_STYLE_DEFAULT;
     private boolean cropVideoEnabled = true;
+    private boolean processVideoEnabled = true;
     private boolean coverEnabled = true;
 
     public static InstagramSelectionConfig createConfig() {
@@ -49,6 +50,15 @@ public final class InstagramSelectionConfig implements Parcelable {
         return this;
     }
 
+    public boolean isProcessVideo() {
+        return processVideoEnabled;
+    }
+
+    public InstagramSelectionConfig setProcessVideoEnabled(boolean enableProcessVideo) {
+        this.processVideoEnabled = enableProcessVideo;
+        return this;
+    }
+
     public boolean haveCover() {
         return coverEnabled;
     }
@@ -67,6 +77,7 @@ public final class InstagramSelectionConfig implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(this.currentTheme);
         dest.writeByte(this.cropVideoEnabled ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.processVideoEnabled ? (byte) 1 : (byte) 0);
         dest.writeByte(this.coverEnabled ? (byte) 1 : (byte) 0);
     }
 
@@ -76,6 +87,7 @@ public final class InstagramSelectionConfig implements Parcelable {
     private InstagramSelectionConfig(Parcel in) {
         this.currentTheme = in.readInt();
         this.cropVideoEnabled = in.readByte() != 0;
+        this.processVideoEnabled = in.readByte() != 0;
         this.coverEnabled = in.readByte() != 0;
     }
 

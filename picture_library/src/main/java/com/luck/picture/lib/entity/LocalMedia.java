@@ -145,6 +145,21 @@ public class LocalMedia implements Parcelable {
     private long bucketId = -1;
 
     /**
+     * isRatioOneToOne
+     */
+    private boolean isRatioOneToOne;
+
+    /**
+     * startTimeUS
+     */
+    private long startTimeUS;
+
+    /**
+     * endTimeUS
+     */
+    private long endTimeUS;
+
+    /**
      * isMaxSelectEnabledMask
      * # For internal use only
      */
@@ -392,6 +407,30 @@ public class LocalMedia implements Parcelable {
 
     public void setBucketId(long bucketId) {
         this.bucketId = bucketId;
+    }
+
+    public boolean isRatioOneToOne() {
+        return isRatioOneToOne;
+    }
+
+    public void setIsRatioOneToOne(boolean isRatioOneToOne) {
+        this.isRatioOneToOne = isRatioOneToOne;
+    }
+
+    public long getStartTimeUS() {
+        return startTimeUS;
+    }
+
+    public void setStartTimeUS(long startTimeUS) {
+        this.startTimeUS = startTimeUS;
+    }
+
+    public long getEndTimeUS() {
+        return endTimeUS;
+    }
+
+    public void setEndTimeUS(long endTimeUS) {
+        this.endTimeUS = endTimeUS;
     }
 
     public boolean isMaxSelectEnabledMask() {
