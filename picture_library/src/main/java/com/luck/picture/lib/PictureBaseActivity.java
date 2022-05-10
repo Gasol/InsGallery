@@ -282,13 +282,13 @@ public abstract class PictureBaseActivity extends AppCompatActivity {
             if (config.titleBarBackgroundColor != 0) {
                 colorPrimary = config.titleBarBackgroundColor;
             } else {
-                colorPrimary = AttrsUtils.getTypeValueColor(this, R.attr.colorPrimary);
+                colorPrimary = AttrsUtils.getTypeValueColor(this, androidx.appcompat.R.attr.colorPrimary);
             }
 
             if (config.pictureStatusBarColor != 0) {
                 colorPrimaryDark = config.pictureStatusBarColor;
             } else {
-                colorPrimaryDark = AttrsUtils.getTypeValueColor(this, R.attr.colorPrimaryDark);
+                colorPrimaryDark = AttrsUtils.getTypeValueColor(this, androidx.appcompat.R.attr.colorPrimaryDark);
             }
         }
 

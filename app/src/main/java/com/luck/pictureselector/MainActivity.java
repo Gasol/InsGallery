@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     case PictureConfig.TYPE_VIDEO:
                         // 预览视频
                         PictureSelector.create(MainActivity.this)
-                                .themeStyle(R.style.picture_default_style)
+                                .themeStyle(com.luck.picture.lib.R.style.picture_default_style)
                                 .externalPictureVideo(media.getPath());
                         break;
                     case PictureConfig.TYPE_AUDIO:
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                        animationStyle.activityPreviewEnterAnimation = R.anim.picture_anim_up_in;
 //                        animationStyle.activityPreviewExitAnimation = R.anim.picture_anim_down_out;
                         PictureSelector.create(MainActivity.this)
-                                .themeStyle(R.style.picture_default_style) // xml设置主题
+                                .themeStyle(com.luck.picture.lib.R.style.picture_default_style)
                                 //.setPictureWindowAnimationStyle(animationStyle)// 自定义页面启动动画
                                 .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)// 设置相册Activity方向，不设置默认使用系统
                                 .isNotPreviewDownload(true)// 预览图片长按是否可以下载
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     tvDeleteText.setText(getString(R.string.app_drag_delete));
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        tvDeleteText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, R.drawable.picture_icon_delete, 0, 0);
+                        tvDeleteText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, com.luck.picture.lib.R.drawable.picture_icon_delete, 0, 0);
                     }
                 }
             }
@@ -437,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         PictureFileUtils.deleteCacheDirFile(getContext(), PictureMimeType.ofImage());
                     } else {
                         Toast.makeText(MainActivity.this,
-                                getString(R.string.picture_jurisdiction), Toast.LENGTH_SHORT).show();
+                                getString(com.luck.picture.lib.R.string.picture_jurisdiction), Toast.LENGTH_SHORT).show();
                     }
                 }
                 break;
