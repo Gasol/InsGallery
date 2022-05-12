@@ -21,6 +21,10 @@ import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.VideoView;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.luck.picture.lib.R;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
@@ -39,6 +43,10 @@ import com.luck.picture.lib.tools.ToastUtils;
 import com.otaliastudios.transcoder.Transcoder;
 import com.otaliastudios.transcoder.TranscoderListener;
 import com.otaliastudios.transcoder.TranscoderOptions;
+import com.otaliastudios.transcoder.resize.AspectRatioResizer;
+import com.otaliastudios.transcoder.resize.FractionResizer;
+import com.otaliastudios.transcoder.resize.PassThroughResizer;
+import com.otaliastudios.transcoder.resize.Resizer;
 import com.otaliastudios.transcoder.sink.DataSink;
 import com.otaliastudios.transcoder.sink.DefaultDataSink;
 import com.otaliastudios.transcoder.source.ClipDataSource;
@@ -46,10 +54,6 @@ import com.otaliastudios.transcoder.source.FilePathDataSource;
 import com.otaliastudios.transcoder.source.UriDataSource;
 import com.otaliastudios.transcoder.strategy.DefaultVideoStrategy;
 import com.otaliastudios.transcoder.strategy.TrackStrategy;
-import com.otaliastudios.transcoder.strategy.size.AspectRatioResizer;
-import com.otaliastudios.transcoder.strategy.size.FractionResizer;
-import com.otaliastudios.transcoder.strategy.size.PassThroughResizer;
-import com.otaliastudios.transcoder.strategy.size.Resizer;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -60,10 +64,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * ================================================
