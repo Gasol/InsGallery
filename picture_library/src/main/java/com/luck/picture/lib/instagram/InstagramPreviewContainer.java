@@ -22,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.VideoView;
 
 import com.luck.picture.lib.R;
+import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
 import com.luck.picture.lib.config.PictureSelectionConfig;
 import com.luck.picture.lib.entity.LocalMedia;
@@ -236,6 +237,7 @@ public class InstagramPreviewContainer extends FrameLayout {
         multiLayoutParams.bottomMargin = ScreenUtils.dip2px(context, 12);
         addView(mMultiView, multiLayoutParams);
         mMultiView.setOnClickListener(v -> setMultiMode(context, !isMulti));
+        mMultiView.setVisibility(config.selectionMode == PictureConfig.MULTIPLE ? View.VISIBLE : View.GONE);
 
         View divider = new View(getContext());
         if (config.instagramSelectionConfig.getCurrentTheme() == InsGallery.THEME_STYLE_DARK) {
