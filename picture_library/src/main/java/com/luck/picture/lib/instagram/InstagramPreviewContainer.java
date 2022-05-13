@@ -227,6 +227,7 @@ public class InstagramPreviewContainer extends FrameLayout {
 
         CombinedDrawable multiDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), 0x88000000, Color.BLACK),
                 context.getResources().getDrawable(R.drawable.discover_many).mutate());
+        multiDrawable.setIconSize(42, 42);
         multiDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
 
         mMultiView.setImageDrawable(multiDrawable);
@@ -234,7 +235,7 @@ public class InstagramPreviewContainer extends FrameLayout {
         multiLayoutParams.rightMargin = ScreenUtils.dip2px(context, 15);
         multiLayoutParams.bottomMargin = ScreenUtils.dip2px(context, 12);
         addView(mMultiView, multiLayoutParams);
-        mMultiView.setOnClickListener(v -> setMultiMode(!isMulti));
+        mMultiView.setOnClickListener(v -> setMultiMode(context, !isMulti));
 
         View divider = new View(getContext());
         if (config.instagramSelectionConfig.getCurrentTheme() == InsGallery.THEME_STYLE_DARK) {
@@ -248,13 +249,26 @@ public class InstagramPreviewContainer extends FrameLayout {
         addView(divider, dividerParms);
     }
 
-    public void setMultiMode(boolean multi) {
+    public void setMultiMode(Context context, boolean multi) {
+        int mIconBackgroundColor;
+        int mIconBackgroundColor2;
+
         isMulti = multi;
         if (multi) {
+            mIconBackgroundColor = 0x880087FF;
+            mIconBackgroundColor2 = 0xFF0087FF;
             mRatioView.setVisibility(View.GONE);
         } else {
+            mIconBackgroundColor = 0x88000000;
+            mIconBackgroundColor2 = Color.BLACK;
             mRatioView.setVisibility(View.VISIBLE);
         }
+        CombinedDrawable multiDrawable = new CombinedDrawable(InstagramUtils.createSimpleSelectorCircleDrawable(ScreenUtils.dip2px(context, 30), mIconBackgroundColor, mIconBackgroundColor2),
+                context.getResources().getDrawable(R.drawable.discover_many).mutate());
+        multiDrawable.setIconSize(42, 42);
+        multiDrawable.setCustomSize(ScreenUtils.dip2px(context, 30), ScreenUtils.dip2px(context, 30));
+        mMultiView.setImageDrawable(multiDrawable);
+
         if (mListener != null) {
             mListener.onSelectionModeChange(multi);
         }
@@ -327,15 +341,15 @@ public class InstagramPreviewContainer extends FrameLayout {
         return mAspectRadio;
     }
 
-    public void setImageUri(@NonNull Uri inputUri, @Nullable Uri outputUri) {
+    public void setImageUri(@NonNull Uri inputUri, @Nullable Uri outputUri, TransformImageView.OnImageLoadedListener onImageLoadedListener) {
         if (mPlayMode != PLAY_IMAGE_MODE) {
             return;
         }
-        if (inputUri != null && outputUri != null) {
+        if (outputUri != null) {
             try {
                 boolean isOnTouch = isOnTouch(inputUri);
-                mGestureCropImageView.setScaleEnabled(isOnTouch ? true : isOnTouch);
-                mGestureCropImageView.setImageUri(inputUri, outputUri);
+                mGestureCropImageView.setScaleEnabled(isOnTouch);
+                mGestureCropImageView.setImageUri(inputUri, outputUri, onImageLoadedListener);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -388,14 +402,9 @@ public class InstagramPreviewContainer extends FrameLayout {
         List<Animator> animators = new ArrayList<>();
         if (mode == PLAY_IMAGE_MODE) {
             InstagramUtils.setViewVisibility(mUCropView, View.VISIBLE);
+            InstagramUtils.setViewVisibility(mVideoView, View.GONE);
+            InstagramUtils.setViewVisibility(mThumbView, View.GONE);
             animators.add(ObjectAnimator.ofFloat(mUCropView, "alpha", 0.1f, 1.0f));
-            mAnimatorSet.addListener(new AnimatorListenerImpl() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    InstagramUtils.setViewVisibility(mVideoView, View.GONE);
-                    InstagramUtils.setViewVisibility(mThumbView, View.GONE);
-                }
-            });
         } else if (mode == PLAY_VIDEO_MODE) {
             InstagramUtils.setViewVisibility(mVideoView, View.VISIBLE);
             InstagramUtils.setViewVisibility(mThumbView, View.VISIBLE);
@@ -406,6 +415,10 @@ public class InstagramPreviewContainer extends FrameLayout {
         mAnimatorSet.setDuration(800);
         mAnimatorSet.playTogether(animators);
         mAnimatorSet.start();
+    }
+
+    public void setPlayMode(int mode) {
+        mPlayMode = mode;
     }
 
     /**

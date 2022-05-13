@@ -22,5 +22,5 @@ public interface PictureSelectorEngine {
      *
      * @return
      */
-    OnResultCallbackListener<LocalMedia> getResultCallbackListener();
+    OnResultCallbackListener getResultCallbackListener();
 }

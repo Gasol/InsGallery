@@ -65,6 +65,10 @@ public class InstagramViewPager extends FrameLayout {
         mItems.get(0).refreshData(context);
         mTabLayout = new InstagramTabLayout(context, items, config);
         addView(mTabLayout);
+
+        if (!config.isQuickCapture) {
+            displayTabLayout(false);
+        }
     }
 
     public void installView(List<Page> items) {

@@ -133,7 +133,7 @@ public final class InsGallery {
                 .isPreviewImage(true)// 是否可预览图片
                 .isPreviewVideo(true)// 是否可预览视频
                 //.querySpecifiedFormatSuffix(PictureMimeType.ofJPEG())// 查询指定后缀格式资源
-                .enablePreviewAudio(false) // 是否可播放音频
+                .isEnablePreviewAudio(false) // 是否可播放音频
                 .isCamera(false)// 是否显示拍照按钮
                 //.isMultipleSkipCrop(false)// 多图裁剪时是否支持跳过，默认支持
                 //.isMultipleRecyclerAnimation(false)// 多图裁剪底部列表显示动画效果

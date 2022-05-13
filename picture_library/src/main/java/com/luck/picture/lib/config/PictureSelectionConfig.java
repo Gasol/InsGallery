@@ -155,6 +155,8 @@ public final class PictureSelectionConfig implements Parcelable {
     public boolean isAndroidQChangeWH;
     public boolean isAndroidQChangeVideoWH;
     public boolean isQuickCapture;
+    public boolean isMultiCheckSound;
+    public boolean isEnableFilter;
     /**
      * 内测专用###########
      */
@@ -269,6 +271,8 @@ public final class PictureSelectionConfig implements Parcelable {
         isAndroidQChangeWH = true;
         isAndroidQChangeVideoWH = false;
         isQuickCapture = true;
+        isMultiCheckSound = false;
+        isEnableFilter = false;
     }
 
     public static PictureSelectionConfig getInstance() {
@@ -379,7 +383,6 @@ public final class PictureSelectionConfig implements Parcelable {
         dest.writeParcelable(this.uCropOptions, flags);
         dest.writeTypedList(this.selectionMedias);
         dest.writeString(this.cameraFileName);
-
         dest.writeByte(this.isOriginalImage ? (byte) 1 : (byte) 0);
         dest.writeInt(this.maxVideoResolution);
         dest.writeDouble(this.outputVideoBitRatePercent);

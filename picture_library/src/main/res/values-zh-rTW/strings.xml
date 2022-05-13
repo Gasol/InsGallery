@@ -3,7 +3,7 @@
     <string name="picture_camera_roll_num">%1$s (%2$d)</string>
     <string name="picture_cancel">取消</string>
     <string name="picture_take_picture">拍攝</string>
-    <string name="picture_rule">不能同時選擇圖片或視頻</string>
+    <string name="picture_rule">不能同時選擇圖片和視頻</string>
     <string name="picture_message_max_num">妳最多只能選擇%1$s張照片</string>
     <string name="picture_min_video_num">視頻最低選擇不能少於%1$s個</string>
     <string name="picture_message_video_max_num">妳最多只能選擇%1$s個視頻</string>

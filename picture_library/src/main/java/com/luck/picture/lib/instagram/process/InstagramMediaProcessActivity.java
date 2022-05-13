@@ -67,16 +67,16 @@ public class InstagramMediaProcessActivity extends PictureBaseActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (container != null && ((ViewGroup)container).getChildAt(0) instanceof LifecycleCallBack) {
-            ((LifecycleCallBack)((ViewGroup)container).getChildAt(0)).onStart(InstagramMediaProcessActivity.this);
+        if (container != null && ((ViewGroup) container).getChildAt(0) instanceof LifecycleCallBack) {
+            ((LifecycleCallBack) ((ViewGroup) container).getChildAt(0)).onStart(InstagramMediaProcessActivity.this);
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (container != null && ((ViewGroup)container).getChildAt(0) instanceof LifecycleCallBack) {
-            ((LifecycleCallBack)((ViewGroup)container).getChildAt(0)).onResume(InstagramMediaProcessActivity.this);
+        if (container != null && ((ViewGroup) container).getChildAt(0) instanceof LifecycleCallBack) {
+            ((LifecycleCallBack) ((ViewGroup) container).getChildAt(0)).onResume(InstagramMediaProcessActivity.this);
         }
     }
 
@@ -84,16 +84,16 @@ public class InstagramMediaProcessActivity extends PictureBaseActivity {
     protected void onPause() {
         overridePendingTransition(0, 0);
         super.onPause();
-        if (container != null && ((ViewGroup)container).getChildAt(0) instanceof LifecycleCallBack) {
-            ((LifecycleCallBack)((ViewGroup)container).getChildAt(0)).onPause(InstagramMediaProcessActivity.this);
+        if (container != null && ((ViewGroup) container).getChildAt(0) instanceof LifecycleCallBack) {
+            ((LifecycleCallBack) ((ViewGroup) container).getChildAt(0)).onPause(InstagramMediaProcessActivity.this);
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (container != null && ((ViewGroup)container).getChildAt(0) instanceof LifecycleCallBack) {
-            ((LifecycleCallBack)((ViewGroup)container).getChildAt(0)).onDestroy(InstagramMediaProcessActivity.this);
+        if (container != null && ((ViewGroup) container).getChildAt(0) instanceof LifecycleCallBack) {
+            ((LifecycleCallBack) ((ViewGroup) container).getChildAt(0)).onDestroy(InstagramMediaProcessActivity.this);
         }
     }
 
@@ -150,21 +150,21 @@ public class InstagramMediaProcessActivity extends PictureBaseActivity {
             @Override
             public void onLeftViewClick() {
                 if (contentView != null && contentView.getChildAt(0) instanceof ProcessStateCallBack) {
-                    ((ProcessStateCallBack)contentView.getChildAt(0)).onBack(InstagramMediaProcessActivity.this);
+                    ((ProcessStateCallBack) contentView.getChildAt(0)).onBack(InstagramMediaProcessActivity.this);
                 }
             }
 
             @Override
             public void onCenterViewClick(ImageView view) {
                 if (contentView != null && contentView.getChildAt(0) instanceof ProcessStateCallBack) {
-                    ((ProcessStateCallBack)contentView.getChildAt(0)).onCenterFeature(InstagramMediaProcessActivity.this, view);
+                    ((ProcessStateCallBack) contentView.getChildAt(0)).onCenterFeature(InstagramMediaProcessActivity.this, view);
                 }
             }
 
             @Override
             public void onRightViewClick() {
                 if (contentView != null && contentView.getChildAt(0) instanceof ProcessStateCallBack) {
-                    ((ProcessStateCallBack)contentView.getChildAt(0)).onProcess(InstagramMediaProcessActivity.this);
+                    ((ProcessStateCallBack) contentView.getChildAt(0)).onProcess(InstagramMediaProcessActivity.this);
                 }
             }
         });
@@ -186,16 +186,16 @@ public class InstagramMediaProcessActivity extends PictureBaseActivity {
 
     @Override
     public void onBackPressed() {
-        if (container != null && ((ViewGroup)container).getChildAt(0) instanceof ProcessStateCallBack) {
-            ((ProcessStateCallBack)((ViewGroup)container).getChildAt(0)).onBack(InstagramMediaProcessActivity.this);
+        if (container != null && ((ViewGroup) container).getChildAt(0) instanceof ProcessStateCallBack) {
+            ((ProcessStateCallBack) ((ViewGroup) container).getChildAt(0)).onBack(InstagramMediaProcessActivity.this);
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (container != null && ((ViewGroup)container).getChildAt(0) instanceof ProcessStateCallBack) {
-            ((ProcessStateCallBack)((ViewGroup)container).getChildAt(0)).onActivityResult(InstagramMediaProcessActivity.this, requestCode, resultCode, data);
+        if (container != null && ((ViewGroup) container).getChildAt(0) instanceof ProcessStateCallBack) {
+            ((ProcessStateCallBack) ((ViewGroup) container).getChildAt(0)).onActivityResult(InstagramMediaProcessActivity.this, requestCode, resultCode, data);
         }
     }
 
