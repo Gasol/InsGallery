@@ -30,10 +30,10 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${cfgs.version_appcompat}"
     implementation "androidx.recyclerview:recyclerview:${cfgs.version_recyclerview}"
     implementation "com.squareup.okio:okio:${cfgs.okio_version}"
-    implementation "androidx.camera:camera-lifecycle:${cfgs.camerax_version}"
     implementation "androidx.localbroadcastmanager:localbroadcastmanager:${cfgs.localbroadcastmanager}"
-    implementation "androidx.camera:camera-view:${cfgs.camerax_view}"
-    implementation "androidx.camera:camera-video:${cfgs.camerax_version}"
+    api "androidx.camera:camera-lifecycle:${cfgs.camerax_version}"
+    api "androidx.camera:camera-view:${cfgs.camerax_view}"
+    api "androidx.camera:camera-video:${cfgs.camerax_version}"
 
     api project(':ucrop')
     api 'com.linkedin.android.litr:litr:1.4.13'
