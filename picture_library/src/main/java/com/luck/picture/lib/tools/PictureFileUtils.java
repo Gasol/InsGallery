@@ -64,7 +64,7 @@ public class PictureFileUtils {
      * 创建文件
      *
      * @param context
-     * @param type
+     * @param chooseMode
      * @param fileName
      * @param format
      * @param outCameraDirectory
@@ -225,7 +225,7 @@ public class PictureFileUtils {
      * Callers should check whether the path is local before assuming it
      * represents a local file.
      *
-     * @param context The context.
+     * @param ctx The context.
      * @param uri     The Uri to query.
      * @author paulburke
      */
@@ -478,7 +478,6 @@ public class PictureFileUtils {
      * set empty PictureSelector Cache
      *
      * @param context
-     * @param type    image、video、audio ...
      */
     public static void deleteAllCacheDirFile(Context context) {
 
