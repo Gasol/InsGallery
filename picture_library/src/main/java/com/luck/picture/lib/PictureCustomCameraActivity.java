@@ -2,7 +2,6 @@ package com.luck.picture.lib;
 
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -12,7 +11,10 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.camera.view.PreviewView;
+
 import com.luck.picture.lib.camera.CustomCameraView;
 import com.luck.picture.lib.camera.listener.CameraListener;
 import com.luck.picture.lib.camera.view.CaptureLayout;
@@ -23,13 +25,6 @@ import com.luck.picture.lib.dialog.PictureCustomDialog;
 import com.luck.picture.lib.permissions.PermissionChecker;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.camera.core.CameraX;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.CameraView;
 
 /**
  * @author：luck
@@ -134,7 +129,7 @@ public class PictureCustomCameraActivity extends PictureSelectorCameraEmptyActiv
     protected void initView() {
         mCameraView.setPictureSelectionConfig(config);
         // 绑定生命周期
-        mCameraView.setBindToLifecycle(new WeakReference<>(this).get());
+        mCameraView.setBindToLifecycle(this);
         // 视频最大拍摄时长
         if (config.recordVideoSecond > 0) {
             mCameraView.setRecordVideoMaxTime(config.recordVideoSecond);
@@ -144,9 +139,9 @@ public class PictureCustomCameraActivity extends PictureSelectorCameraEmptyActiv
             mCameraView.setRecordVideoMinTime(config.recordVideoMinSecond);
         }
         // 获取CameraView
-        CameraView cameraView = mCameraView.getCameraView();
+        PreviewView cameraView = mCameraView.getCameraView();
         if (cameraView != null && config.isCameraAroundState) {
-            cameraView.toggleCamera();
+//            cameraView.toggleCamera(); TODO
         }
         // 获取录制按钮
         CaptureLayout captureLayout = mCameraView.getCaptureLayout();

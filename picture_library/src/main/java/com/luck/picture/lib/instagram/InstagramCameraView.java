@@ -1,16 +1,35 @@
 package com.luck.picture.lib.instagram;
 
+import static android.util.Log.d;
+
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.view.CameraController;
+import androidx.camera.view.LifecycleCameraController;
+import androidx.camera.view.PreviewView;
+import androidx.camera.view.video.OnVideoSavedCallback;
+import androidx.camera.view.video.OutputFileOptions;
+import androidx.camera.view.video.OutputFileResults;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
+
 import com.luck.picture.lib.R;
+import com.luck.picture.lib.camera.CustomCameraView;
 import com.luck.picture.lib.camera.listener.CameraListener;
 import com.luck.picture.lib.config.PictureMimeType;
 import com.luck.picture.lib.config.PictureSelectionConfig;
@@ -26,17 +45,6 @@ import com.luck.picture.lib.tools.StringUtils;
 import java.io.File;
 import java.lang.ref.WeakReference;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.VideoCapture;
-import androidx.camera.view.CameraView;
-import androidx.camera.view.video.OnVideoSavedCallback;
-import androidx.camera.view.video.OutputFileResults;
-import androidx.core.content.ContextCompat;
-
 /**
  * ================================================
  * Created by JessYan on 2020/4/16 18:40
@@ -46,6 +54,8 @@ import androidx.core.content.ContextCompat;
  */
 @SuppressLint("UnsafeExperimentalUsageError")
 public class InstagramCameraView extends FrameLayout {
+    private static final String TAG = InstagramCameraView.class.getSimpleName();
+
     public static final int STATE_CAPTURE = 1;
     public static final int STATE_RECORDER = 2;
     private static final int TYPE_FLASH_AUTO = 0x021;
@@ -54,7 +64,8 @@ public class InstagramCameraView extends FrameLayout {
     private int mTypeFlash = TYPE_FLASH_OFF;
     private PictureSelectionConfig mConfig;
     private WeakReference<AppCompatActivity> mActivity;
-    private CameraView mCameraView;
+    private PreviewView mCameraView;
+    private LifecycleCameraController mCameraController;
     private final ImageView mSwitchView;
     private final ImageView mFlashView;
     private InstagramCaptureLayout mCaptureLayout;
@@ -64,13 +75,15 @@ public class InstagramCameraView extends FrameLayout {
     private CameraListener mCameraListener;
     private long mRecordTime = 0;
     private final InstagramCameraEmptyView mCameraEmptyView;
+    private CameraSelector mCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
+    @SuppressLint("UnsafeOptInUsageError")
     public InstagramCameraView(@NonNull Context context, AppCompatActivity activity, PictureSelectionConfig config) {
         super(context);
         mActivity = new WeakReference<>(activity);
         mConfig = config;
 
-        mCameraView = new CameraView(context);
+        mCameraView = new PreviewView(context);
         addView(mCameraView);
 
         mSwitchView = new ImageView(context);
@@ -81,7 +94,7 @@ public class InstagramCameraView extends FrameLayout {
             }
             isFront = !isFront;
             ObjectAnimator.ofFloat(mSwitchView, "rotation", mSwitchView.getRotation() - 180f).setDuration(400).start();
-            mCameraView.toggleCamera();
+            toggleCamera();
         });
         addView(mSwitchView);
 
@@ -104,10 +117,9 @@ public class InstagramCameraView extends FrameLayout {
                 if (mCameraView == null) {
                     return;
                 }
-                mCameraView.setCaptureMode(androidx.camera.view.CameraView.CaptureMode.IMAGE);
                 File imageOutFile = createImageFile();
                 ImageCapture.OutputFileOptions options = new ImageCapture.OutputFileOptions.Builder(imageOutFile).build();
-                mCameraView.takePicture(options, ContextCompat.getMainExecutor(getContext().getApplicationContext()), new OnImageSavedCallbackImpl(InstagramCameraView.this, imageOutFile));
+                mCameraController.takePicture(options, ContextCompat.getMainExecutor(getContext().getApplicationContext()), new OnImageSavedCallbackImpl(InstagramCameraView.this, imageOutFile));
             }
 
             @Override
@@ -115,9 +127,9 @@ public class InstagramCameraView extends FrameLayout {
                 if (mCameraView == null) {
                     return;
                 }
-                mCameraView.setCaptureMode(androidx.camera.view.CameraView.CaptureMode.VIDEO);
                 File mVideoFile = createVideoFile();
-                mCameraView.startRecording(mVideoFile, ContextCompat.getMainExecutor(getContext().getApplicationContext()), new OnVideoSavedCallbackImpl(InstagramCameraView.this, mVideoFile));
+                OutputFileOptions outputFileOptions = OutputFileOptions.builder(mVideoFile).build();
+                mCameraController.startRecording(outputFileOptions, ContextCompat.getMainExecutor(getContext().getApplicationContext()), new OnVideoSavedCallbackImpl(InstagramCameraView.this, mVideoFile));
             }
 
             @Override
@@ -126,7 +138,7 @@ public class InstagramCameraView extends FrameLayout {
                     return;
                 }
                 mRecordTime = time;
-                mCameraView.stopRecording();
+                mCameraController.stopRecording();
             }
 
             @Override
@@ -135,7 +147,7 @@ public class InstagramCameraView extends FrameLayout {
                     return;
                 }
                 mRecordTime = time;
-                mCameraView.stopRecording();
+                mCameraController.stopRecording();
             }
 
             @Override
@@ -149,6 +161,35 @@ public class InstagramCameraView extends FrameLayout {
         mCameraEmptyView = new InstagramCameraEmptyView(context, config);
         addView(mCameraEmptyView);
         mCameraEmptyView.setVisibility(View.INVISIBLE);
+    }
+
+    private void toggleCamera() {
+        if (mCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            mCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        } else {
+            mCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+        }
+        AppCompatActivity activity = mActivity.get();
+        startCamera(activity);
+    }
+
+    @SuppressLint({"UnsafeExperimentalUsageError", "UnsafeOptInUsageError"})
+    private void startCamera(LifecycleOwner lifecycleOwner) {
+        if (lifecycleOwner == null) {
+            Log.d(TAG, "lifecycle owner is null");
+            return;
+        }
+        LifecycleCameraController controller = new LifecycleCameraController(getContext());
+        controller.setCameraSelector(mCameraSelector);
+        if (mCameraState == STATE_CAPTURE) {
+            controller.setEnabledUseCases(CameraController.IMAGE_CAPTURE);
+        } else if (mCameraState == STATE_RECORDER) {
+            controller.setEnabledUseCases(CameraController.VIDEO_CAPTURE);
+        }
+        mCameraView.setController(controller);
+        controller.enableTorch(true);
+        mCameraController = controller;
+        controller.bindToLifecycle(lifecycleOwner);
     }
 
     public File createVideoFile() {
@@ -226,7 +267,7 @@ public class InstagramCameraView extends FrameLayout {
             if (activity == null) {
                 return;
             }
-            mCameraView.bindToLifecycle(activity);
+            startCamera(activity);
         }
     }
 
@@ -284,9 +325,10 @@ public class InstagramCameraView extends FrameLayout {
             InstagramUtils.setViewVisibility(mFlashView, View.INVISIBLE);
         }
         mCaptureLayout.setCameraState(cameraState);
+        startCamera(mActivity.get());
     }
 
-    public CameraView getCameraView() {
+    public PreviewView getCameraView() {
         return mCameraView;
     }
 
@@ -304,15 +346,15 @@ public class InstagramCameraView extends FrameLayout {
         switch (mTypeFlash) {
             case TYPE_FLASH_AUTO:
                 mFlashView.setImageResource(R.drawable.discover_flash_a);
-                mCameraView.setFlash(ImageCapture.FLASH_MODE_AUTO);
+                mCameraController.setImageCaptureFlashMode(ImageCapture.FLASH_MODE_AUTO);
                 break;
             case TYPE_FLASH_ON:
                 mFlashView.setImageResource(R.drawable.discover_flash_on);
-                mCameraView.setFlash(ImageCapture.FLASH_MODE_ON);
+                mCameraController.setImageCaptureFlashMode(ImageCapture.FLASH_MODE_ON);
                 break;
             case TYPE_FLASH_OFF:
                 mFlashView.setImageResource(R.drawable.discover_flash_off);
-                mCameraView.setFlash(ImageCapture.FLASH_MODE_OFF);
+                mCameraController.setImageCaptureFlashMode(ImageCapture.FLASH_MODE_OFF);
                 break;
             default:
                 break;
@@ -346,16 +388,18 @@ public class InstagramCameraView extends FrameLayout {
         InstagramUtils.setViewVisibility(mCameraEmptyView, visibility);
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     public void onResume() {
-        if (mCameraView != null && mCameraView.isRecording()) {
-            mCameraView.stopRecording();
+        if (mCameraController != null && mCameraController.isRecording()) {
+            mCameraController.stopRecording();
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     public void onPause() {
-        if (mCameraView != null && mCameraView.isRecording()) {
+        if (mCameraController != null && mCameraController.isRecording()) {
             mRecordTime = 0;
-            mCameraView.stopRecording();
+            mCameraController.stopRecording();
         }
     }
 
@@ -417,6 +461,7 @@ public class InstagramCameraView extends FrameLayout {
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     private static class OnVideoSavedCallbackImpl implements OnVideoSavedCallback {
         private WeakReference<InstagramCameraView> mCameraView;
         private File mVideoFile;

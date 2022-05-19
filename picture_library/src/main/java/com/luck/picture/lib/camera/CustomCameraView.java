@@ -7,6 +7,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
@@ -15,6 +16,23 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.CameraController;
+import androidx.camera.view.LifecycleCameraController;
+import androidx.camera.view.PreviewView;
+import androidx.camera.view.video.OnVideoSavedCallback;
+import androidx.camera.view.video.OutputFileOptions;
+import androidx.camera.view.video.OutputFileResults;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
+
+import com.google.common.util.concurrent.ListenableFuture;
 import com.luck.picture.lib.PictureMediaScannerConnection;
 import com.luck.picture.lib.R;
 import com.luck.picture.lib.camera.listener.CameraListener;
@@ -37,21 +55,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCapture.OutputFileOptions;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.VideoCapture;
-import androidx.camera.view.CameraView;
-import androidx.camera.view.video.OnVideoSavedCallback;
-import androidx.camera.view.video.OutputFileResults;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleOwner;
-
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author：luck
  * @date：2020-01-04 13:41
@@ -59,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @SuppressLint("UnsafeExperimentalUsageError")
 public class CustomCameraView extends RelativeLayout {
+    private static final String TAG = CustomCameraView.class.getSimpleName();
+
     /**
      * 只能拍照
      */
@@ -85,7 +90,7 @@ public class CustomCameraView extends RelativeLayout {
     private CameraListener mCameraListener;
     private ClickListener mOnClickListener;
     private ImageCallbackListener mImageCallbackListener;
-    private androidx.camera.view.CameraView mCameraView;
+    private PreviewView mCameraView;
     private ImageView mImagePreview;
     private ImageView mSwitchCamera;
     private ImageView mFlashLamp;
@@ -95,6 +100,10 @@ public class CustomCameraView extends RelativeLayout {
     private long recordTime = 0;
     private File mVideoFile;
     private File mPhotoFile;
+    private LifecycleCameraController mCameraController;
+    private CameraSelector mCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+    private WeakReference<LifecycleOwner> mLifecycleOwnerRef;
+    private boolean mIsRecording = false;
 
     public CustomCameraView(Context context) {
         this(context, null);
@@ -109,12 +118,12 @@ public class CustomCameraView extends RelativeLayout {
         initView();
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     public void initView() {
         setWillNotDraw(false);
         setBackgroundColor(ContextCompat.getColor(getContext(), R.color.picture_color_black));
         View view = LayoutInflater.from(getContext()).inflate(R.layout.picture_camera_view, this);
         mCameraView = view.findViewById(R.id.cameraView);
-        mCameraView.enableTorch(true);
         mTextureView = view.findViewById(R.id.video_play_preview);
         mImagePreview = view.findViewById(R.id.image_preview);
         mSwitchCamera = view.findViewById(R.id.image_switch);
@@ -130,32 +139,34 @@ public class CustomCameraView extends RelativeLayout {
         mCaptureLayout = view.findViewById(R.id.capture_layout);
         mCaptureLayout.setDuration(15 * 1000);
         //切换摄像头
-        mSwitchCamera.setOnClickListener(v -> mCameraView.toggleCamera());
+        mSwitchCamera.setOnClickListener(v -> toggleCamera());
         //拍照 录像
         mCaptureLayout.setCaptureListener(new CaptureListener() {
             @Override
             public void takePictures() {
                 mSwitchCamera.setVisibility(INVISIBLE);
                 mFlashLamp.setVisibility(INVISIBLE);
-                mCameraView.setCaptureMode(androidx.camera.view.CameraView.CaptureMode.IMAGE);
                 File imageOutFile = createImageFile();
                 if (imageOutFile == null) {
                     return;
                 }
+                mIsRecording = false;
                 mPhotoFile = imageOutFile;
                 ImageCapture.OutputFileOptions options = new ImageCapture.OutputFileOptions.Builder(imageOutFile).build();
-                mCameraView.takePicture(options, ContextCompat.getMainExecutor(getContext()),
+                mCameraController.setImageCaptureFlashMode(getFlashMode());
+                mCameraController.takePicture(options, ContextCompat.getMainExecutor(getContext()),
                         new MyImageResultCallback(getContext(), mConfig, imageOutFile,
                                 mImagePreview, mCaptureLayout, mImageCallbackListener, mCameraListener));
             }
 
             @Override
             public void recordStart() {
+                mIsRecording = true;
                 mSwitchCamera.setVisibility(INVISIBLE);
                 mFlashLamp.setVisibility(INVISIBLE);
-                mCameraView.setCaptureMode(androidx.camera.view.CameraView.CaptureMode.VIDEO);
                 mVideoFile = createVideoFile();
-                mCameraView.startRecording(mVideoFile, ContextCompat.getMainExecutor(getContext()),
+                OutputFileOptions outputFileOptions = OutputFileOptions.builder(mVideoFile).build();
+                mCameraController.startRecording(outputFileOptions, ContextCompat.getMainExecutor(getContext()),
                         new OnVideoSavedCallback() {
                             @Override
                             public void onVideoSaved(@NonNull OutputFileResults outputFileResults) {
@@ -202,13 +213,13 @@ public class CustomCameraView extends RelativeLayout {
                 mFlashLamp.setVisibility(VISIBLE);
                 mCaptureLayout.resetCaptureLayout();
                 mCaptureLayout.setTextWithAnimation(getContext().getString(R.string.picture_recording_time_is_short));
-                mCameraView.stopRecording();
+                mCameraController.stopRecording();
             }
 
             @Override
             public void recordEnd(long time) {
                 recordTime = time;
-                mCameraView.stopRecording();
+                mCameraController.stopRecording();
             }
 
             @Override
@@ -233,7 +244,7 @@ public class CustomCameraView extends RelativeLayout {
 
             @Override
             public void confirm() {
-                if (mCameraView.getCaptureMode() == androidx.camera.view.CameraView.CaptureMode.VIDEO) {
+                if (mIsRecording) {
                     if (mVideoFile == null) {
                         return;
                     }
@@ -422,10 +433,48 @@ public class CustomCameraView extends RelativeLayout {
     }
 
     public void setBindToLifecycle(LifecycleOwner lifecycleOwner) {
-        mCameraView.bindToLifecycle(lifecycleOwner);
+        mLifecycleOwnerRef = new WeakReference<>(lifecycleOwner);
+        startCamera();
         lifecycleOwner.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
 
         });
+    }
+
+    private void toggleCamera() {
+        if (mCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            mCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        } else {
+            mCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+        }
+        startCamera();
+    }
+
+    @SuppressLint({"UnsafeExperimentalUsageError", "UnsafeOptInUsageError"})
+    private void startCamera() {
+        if (mLifecycleOwnerRef == null) {
+            return;
+        }
+        LifecycleOwner lifecycleOwner = mLifecycleOwnerRef.get();
+        if (lifecycleOwner == null) {
+            return;
+        }
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(getContext());
+
+        LifecycleCameraController controller = new LifecycleCameraController(getContext());
+        controller.setCameraSelector(mCameraSelector);
+        int enabledUseCases = CameraController.IMAGE_CAPTURE;
+        if (mConfig.buttonFeatures == CustomCameraView.BUTTON_STATE_BOTH) {
+            enabledUseCases = CameraController.IMAGE_CAPTURE | CameraController.VIDEO_CAPTURE;
+        } else if (mConfig.buttonFeatures == CustomCameraView.BUTTON_STATE_ONLY_CAPTURE) {
+            enabledUseCases = CameraController.IMAGE_CAPTURE;
+        } else if (mConfig.buttonFeatures == CustomCameraView.BUTTON_STATE_ONLY_RECORDER) {
+            enabledUseCases = CameraController.VIDEO_CAPTURE;
+        }
+        controller.setEnabledUseCases(enabledUseCases);
+        mCameraView.setController(controller);
+        controller.enableTorch(true);
+        mCameraController = controller;
+        controller.bindToLifecycle(lifecycleOwner);
     }
 
     /**
@@ -455,24 +504,33 @@ public class CustomCameraView extends RelativeLayout {
         this.mImageCallbackListener = mImageCallbackListener;
     }
 
+    private int getFlashMode() {
+        switch (type_flash) {
+            case TYPE_FLASH_AUTO:
+                return ImageCapture.FLASH_MODE_AUTO;
+            case TYPE_FLASH_ON:
+                return ImageCapture.FLASH_MODE_ON;
+            case TYPE_FLASH_OFF:
+                return ImageCapture.FLASH_MODE_OFF;
+        }
+        return ImageCapture.FLASH_MODE_OFF;
+    }
+
     private void setFlashRes() {
         switch (type_flash) {
             case TYPE_FLASH_AUTO:
                 mFlashLamp.setImageResource(R.drawable.picture_ic_flash_auto);
-                mCameraView.setFlash(ImageCapture.FLASH_MODE_AUTO);
                 break;
             case TYPE_FLASH_ON:
                 mFlashLamp.setImageResource(R.drawable.picture_ic_flash_on);
-                mCameraView.setFlash(ImageCapture.FLASH_MODE_ON);
                 break;
             case TYPE_FLASH_OFF:
                 mFlashLamp.setImageResource(R.drawable.picture_ic_flash_off);
-                mCameraView.setFlash(ImageCapture.FLASH_MODE_OFF);
                 break;
         }
     }
 
-    public CameraView getCameraView() {
+    public PreviewView getCameraView() {
         return mCameraView;
     }
 
@@ -483,10 +541,11 @@ public class CustomCameraView extends RelativeLayout {
     /**
      * 重置状态
      */
+    @SuppressLint("UnsafeOptInUsageError")
     private void resetState() {
-        if (mCameraView.getCaptureMode() == androidx.camera.view.CameraView.CaptureMode.VIDEO) {
-            if (mCameraView.isRecording()) {
-                mCameraView.stopRecording();
+        if (mIsRecording) {
+            if (mCameraController.isRecording()) {
+                mCameraController.stopRecording();
             }
             if (mVideoFile != null && mVideoFile.exists()) {
                 mVideoFile.delete();

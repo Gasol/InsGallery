@@ -3,6 +3,7 @@ package com.luck.picture.lib;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import com.luck.picture.lib.animators.AnimationType;
 import com.luck.picture.lib.config.PictureConfig;
@@ -40,6 +41,7 @@ import static android.os.Build.VERSION_CODES.KITKAT;
  */
 
 public class PictureSelectionModel {
+    private final String TAG = PictureSelectionModel.class.getSimpleName();
     private PictureSelectionConfig selectionConfig;
     private PictureSelector selector;
 
@@ -1264,11 +1266,17 @@ public class PictureSelectionModel {
             if (selectionConfig.camera && selectionConfig.isUseCustomCamera) {
                 intent = new Intent(activity, PictureCustomCameraActivity.class);
             } else {
-                intent = new Intent(activity, selectionConfig.camera
-                        ? PictureSelectorCameraEmptyActivity.class :
-                        selectionConfig.isWeChatStyle ? PictureSelectorWeChatStyleActivity.class
-                                : PictureSelectorActivity.class);
+                Class<? extends PictureBaseActivity> activityClass;
+                if (selectionConfig.camera) {
+                    activityClass = PictureSelectorCameraEmptyActivity.class;
+                } else if (selectionConfig.isWeChatStyle) {
+                    activityClass = PictureSelectorWeChatStyleActivity.class;
+                } else {
+                    activityClass = PictureSelectorActivity.class;
+                }
+                intent = new Intent(activity, activityClass);
             }
+            Log.d(TAG, "intent: " + intent);
             InstagramSelectionConfig.convertIntent(selectionConfig, intent);
             selectionConfig.isCallbackMode = false;
             Fragment fragment = selector.getFragment();

@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -158,9 +159,7 @@ public abstract class PictureBaseActivity extends AppCompatActivity {
         }
         checkConfigNull();
         PictureLanguageUtils.setAppLanguage(getContext(), config.language);
-        if (!config.camera) {
-            setTheme(config.themeStyleId == 0 ? R.style.picture_default_style : config.themeStyleId);
-        }
+        setTheme(config.themeStyleId == 0 ? R.style.picture_default_style : config.themeStyleId);
         super.onCreate(savedInstanceState == null ? new Bundle() : savedInstanceState);
         newCreateEngine();
         newCreateResultCallbackListener();

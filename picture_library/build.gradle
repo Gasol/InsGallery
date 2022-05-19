@@ -35,6 +35,8 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:${cfgs.camerax_version}"
     implementation "androidx.localbroadcastmanager:localbroadcastmanager:${cfgs.localbroadcastmanager}"
     implementation "androidx.camera:camera-view:${cfgs.camerax_view}"
+    implementation "androidx.camera:camera-video:${cfgs.camerax_version}"
+
     api project(':ucrop')
     api 'com.linkedin.android.litr:litr:1.4.13'
 //    api 'com.googlecode.mp4parser:isoparser:1.1.22'
