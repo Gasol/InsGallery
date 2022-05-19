@@ -164,6 +164,8 @@ public final class PictureSelectionConfig implements Parcelable {
     public boolean isFallbackVersion2;
     public boolean isFallbackVersion3;
 
+    public boolean enableInstagramStyleVideoTab;
+
     protected void initDefaultValue() {
         chooseMode = PictureMimeType.ofImage();
         camera = false;
@@ -273,6 +275,7 @@ public final class PictureSelectionConfig implements Parcelable {
         isQuickCapture = true;
         isMultiCheckSound = false;
         isEnableFilter = false;
+        enableInstagramStyleVideoTab = true;
     }
 
     public static PictureSelectionConfig getInstance() {
@@ -417,6 +420,8 @@ public final class PictureSelectionConfig implements Parcelable {
         dest.writeByte(this.isFallbackVersion ? (byte) 1 : (byte) 0);
         dest.writeByte(this.isFallbackVersion2 ? (byte) 1 : (byte) 0);
         dest.writeByte(this.isFallbackVersion3 ? (byte) 1 : (byte) 0);
+
+        dest.writeByte(this.enableInstagramStyleVideoTab ? (byte) 1 : (byte) 0);
     }
 
     protected PictureSelectionConfig(Parcel in) {
@@ -526,6 +531,8 @@ public final class PictureSelectionConfig implements Parcelable {
         this.isFallbackVersion = in.readByte() != 0;
         this.isFallbackVersion2 = in.readByte() != 0;
         this.isFallbackVersion3 = in.readByte() != 0;
+
+        this.enableInstagramStyleVideoTab = in.readByte() != 0;
     }
 
     public static final Creator<PictureSelectionConfig> CREATOR = new Creator<PictureSelectionConfig>() {

@@ -262,7 +262,9 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         if (config.isQuickCapture) {
             PagePhoto pagePhoto = new PagePhoto(this, config);
             mList.add(pagePhoto);
-            mList.add(new PageVideo(pagePhoto));
+            if (config.enableInstagramStyleVideoTab) {
+                mList.add(new PageVideo(pagePhoto));
+            }
 
             pagePhoto.setCameraListener(new CameraListener() {
                 @Override
@@ -293,7 +295,9 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         mInstagramViewPager = new InstagramViewPager(getContext(), mList, config);
         ((RelativeLayout) container).addView(mInstagramViewPager, params);
 
-        mInstagramViewPager.setSkipRange(1);
+        if (mList.size() > 2) {
+            mInstagramViewPager.setSkipRange(1);
+        }
         mInstagramViewPager.setOnPageChangeListener(new OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -1653,7 +1657,9 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         }
 
         if (!config.isEnableFilter) {
-            onResult(result);
+            handlerResult(result);
+        } else if (config.isOriginalImage) {
+            singleCropHandleResult(data);
         } else {
             InstagramMediaProcessActivity.launchActivity(this, config, result, bundle, InstagramMediaProcessActivity.REQUEST_SINGLE_IMAGE_PROCESS);
         }
