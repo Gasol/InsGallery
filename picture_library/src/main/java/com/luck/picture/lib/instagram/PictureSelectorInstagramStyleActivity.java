@@ -192,7 +192,6 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
 
         config.isCamera = false;
         config.isSingleDirectReturn = true;
-        config.isWithVideoImage = false;
         config.maxVideoSelectNum = 1;
         config.aspect_ratio_x = 1;
         config.aspect_ratio_y = 1;
@@ -209,7 +208,7 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
             public void onSelectionModeChange(boolean isMulti) {
                 if (isMulti) {
                     config.selectionMode = PictureConfig.MULTIPLE;
-                    config.isSingleDirectReturn = false;
+                    config.isSingleDirectReturn = config.minSelectNum == 1;
                     if (mInstagramViewPager != null) {
                         mInstagramGallery.setInitGalleryHeight();
                         if (config.isQuickCapture) {
