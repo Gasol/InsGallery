@@ -13,6 +13,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -237,6 +238,7 @@ public class InstagramPreviewContainer extends FrameLayout {
         multiLayoutParams.bottomMargin = ScreenUtils.dip2px(context, 12);
         addView(mMultiView, multiLayoutParams);
         mMultiView.setOnClickListener(v -> setMultiMode(context, !isMulti));
+        Log.d("IGPreviewContainer", "selectionMode: " + config.selectionMode);
         mMultiView.setVisibility(config.selectionMode == PictureConfig.MULTIPLE ? View.VISIBLE : View.GONE);
 
         View divider = new View(getContext());
