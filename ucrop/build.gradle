@@ -26,6 +26,12 @@ android {
         abortOnError false
         warning 'InvalidPackage'
     }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
     namespace 'com.yalantis.ucrop'
 }
 

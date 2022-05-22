@@ -25,6 +25,12 @@ android {
         abortOnError false
         warning 'InvalidPackage'
     }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
     namespace 'com.luck.picture.lib'
 }
 
