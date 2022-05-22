@@ -236,6 +236,7 @@ public class InstagramPreviewContainer extends FrameLayout {
         multiLayoutParams.bottomMargin = ScreenUtils.dip2px(context, 12);
         addView(mMultiView, multiLayoutParams);
         mMultiView.setOnClickListener(v -> setMultiMode(context, !isMulti));
+        mMultiView.setVisibility(config.hideMultiModeButton ? View.GONE : View.VISIBLE);
 
         View divider = new View(getContext());
         if (config.instagramSelectionConfig.getCurrentTheme() == InsGallery.THEME_STYLE_DARK) {

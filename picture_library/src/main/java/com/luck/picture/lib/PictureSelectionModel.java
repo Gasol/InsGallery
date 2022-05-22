@@ -1456,4 +1456,9 @@ public class PictureSelectionModel {
             throw new NullPointerException("This PictureSelector is Null");
         }
     }
+
+    public PictureSelectionModel hideMultiModeButton(boolean hide) {
+        selectionConfig.hideMultiModeButton = hide;
+        return this;
+    }
 }
