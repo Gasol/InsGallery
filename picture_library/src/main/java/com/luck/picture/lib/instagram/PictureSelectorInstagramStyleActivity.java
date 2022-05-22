@@ -193,8 +193,6 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         config.isCamera = false;
         config.selectionMode = PictureConfig.SINGLE;
         config.isSingleDirectReturn = true;
-        config.isWithVideoImage = false;
-        config.maxVideoSelectNum = 1;
         config.aspect_ratio_x = 1;
         config.aspect_ratio_y = 1;
         config.enableCrop = true;
