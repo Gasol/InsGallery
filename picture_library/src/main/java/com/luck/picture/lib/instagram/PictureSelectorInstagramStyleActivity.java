@@ -195,7 +195,6 @@ public class PictureSelectorInstagramStyleActivity extends PictureBaseActivity i
         config.isSingleDirectReturn = true;
         config.aspect_ratio_x = 1;
         config.aspect_ratio_y = 1;
-        config.enableCrop = true;
 //        config.recordVideoMinSecond = 3;
 
         mPictureRecycler = new GalleryViewImpl(getContext());
