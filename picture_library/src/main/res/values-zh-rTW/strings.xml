@@ -80,4 +80,5 @@
     <string name="trim">修剪</string>
     <string name="cover">封面</string>
     <string name="video_clip_failed">影片剪切失敗！</string>
+    <string name="exceed_the_number_of_selection">總共只能選擇 %d 個照片或影片</string>
 </resources>

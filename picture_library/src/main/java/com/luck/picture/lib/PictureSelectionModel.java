@@ -1461,4 +1461,9 @@ public class PictureSelectionModel {
         selectionConfig.hideMultiModeButton = hide;
         return this;
     }
+
+    public PictureSelectionModel setSelectedNumInTotal(int total) {
+        selectionConfig.selectedNumInTotal = total;
+        return this;
+    }
 }

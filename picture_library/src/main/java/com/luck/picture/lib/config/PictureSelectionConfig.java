@@ -166,6 +166,7 @@ public final class PictureSelectionConfig implements Parcelable {
 
     public boolean enableInstagramStyleVideoTab;
     public boolean hideMultiModeButton;
+    public int selectedNumInTotal;
 
     protected void initDefaultValue() {
         chooseMode = PictureMimeType.ofImage();
@@ -278,6 +279,7 @@ public final class PictureSelectionConfig implements Parcelable {
         isEnableFilter = false;
         enableInstagramStyleVideoTab = true;
         hideMultiModeButton = false;
+        selectedNumInTotal = 0;
     }
 
     public static PictureSelectionConfig getInstance() {
@@ -425,6 +427,7 @@ public final class PictureSelectionConfig implements Parcelable {
 
         dest.writeByte(this.enableInstagramStyleVideoTab ? (byte) 1 : (byte) 0);
         dest.writeByte(this.hideMultiModeButton ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.selectedNumInTotal);
     }
 
     protected PictureSelectionConfig(Parcel in) {
@@ -537,6 +540,7 @@ public final class PictureSelectionConfig implements Parcelable {
 
         this.enableInstagramStyleVideoTab = in.readByte() != 0;
         this.hideMultiModeButton = in.readByte() != 0;
+        this.selectedNumInTotal = in.readInt();
     }
 
     public static final Creator<PictureSelectionConfig> CREATOR = new Creator<PictureSelectionConfig>() {
