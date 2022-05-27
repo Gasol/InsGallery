@@ -392,7 +392,7 @@ public class InstagramImageGridAdapter extends RecyclerView.Adapter<RecyclerView
                 }
             }
             if (config.selectedNumInTotal > 0) {
-                if (size > config.selectedNumInTotal) {
+                if (size >= config.selectedNumInTotal) {
                     ToastUtils.s(context, context.getString(R.string.exceed_the_number_of_selection, config.selectedNumInTotal));
                     return;
                 }
