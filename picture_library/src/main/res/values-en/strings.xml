@@ -81,4 +81,5 @@
     <string name="trim">Trim</string>
     <string name="cover">Cover</string>
     <string name="video_clip_failed">video clip failed!</string>
+    <string name="exceed_the_number_of_selection">Up to %d photos or videos can be selected</string>
 </resources>
